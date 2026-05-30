@@ -188,7 +188,7 @@
     <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
       <div class="refresh-pill live" id="refresh-pill" onclick="refreshAll()">
         <div class="pulse"></div>
-        <span id="refresh-label">Refreshing every 5 min</span>
+        <span id="refresh-label">Refreshing every 2 min</span>
       </div>
       <div style="font-size:9px;color:var(--dim)" id="last-updated"></div>
     </div>
@@ -377,14 +377,14 @@ async function refreshAll(manual=false){
   const now = stamp();
   const upEl = document.getElementById('last-updated');
   if(upEl) upEl.textContent = `Updated ${now}`;
-  if(pill){pill.classList.add('live');lbl.textContent='Refreshing every 5 min'}
+  if(pill){pill.classList.add('live');lbl.textContent='Refreshing every 2 min'}
 
   // Re-render current tab
   renderTab(currentTab);
 
-  // Schedule next refresh in 5 minutes
+  // Schedule next refresh in 2 minutes
   clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(()=>refreshAll(), 5*60*1000);
+  refreshTimer = setTimeout(()=>refreshAll(), 2*60*1000);
 }
 
 // ─────────────────────────────────────────────
