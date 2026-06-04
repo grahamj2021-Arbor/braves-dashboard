@@ -9,7 +9,8 @@
   <meta name="theme-color" content="#0a0f0d"/>
   <title>Braves Dashboard</title>
   <link rel="manifest" href="manifest.json"/>
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23002B5C'/%3E%3Ctext x='90' y='115' font-size='80' text-anchor='middle' fill='%23CE1141' font-family='Arial Black'%3EA%3C/text%3E%3C/svg%3E"/>
+  <link rel="apple-touch-icon" href="braves-icon.png"/>
+  <link rel="icon" type="image/png" href="braves-icon.png"/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&family=Anton&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -132,57 +133,97 @@
     .loading-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px 20px;text-align:center}
     .loading-overlay .big-spin{width:40px;height:40px;border:3px solid #22c55e22;border-top-color:var(--green);border-radius:50%;animation:spin 1s linear infinite}
     .loading-msg{font-size:13px;color:var(--muted)}
-    /* GAMES */
-    .game-selector{display:flex;gap:8px;margin-bottom:16px}
-    .gsb{flex:1;padding:10px 6px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--dim);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;text-align:center}
-    .gsb.active{background:var(--red);color:#fff;border-color:var(--red)}
-    .game-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden}
-    .game-title{font-family:'Anton',sans-serif;font-size:22px;margin-bottom:4px}
-    .game-sub{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5}
-    .score-row{display:flex;gap:10px;margin-bottom:14px}
-    .score-box{background:#0a1410;border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-align:center;flex:1}
-    .score-box .sl{font-size:9px;color:var(--dim);letter-spacing:1.5px;margin-bottom:3px}
-    .score-box .sv{font-family:'Anton',sans-serif;font-size:24px;line-height:1}
-    .game-btn{width:100%;padding:16px;border:none;border-radius:12px;font-family:'Anton',sans-serif;font-size:20px;letter-spacing:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;margin-top:8px}
-    .game-btn:active{transform:scale(.97);filter:brightness(1.2)}
-    .game-btn.primary{background:var(--red);color:#fff;box-shadow:0 4px 20px rgba(206,17,65,.35)}
-    .game-btn.secondary{background:#1e3a26;color:var(--green);border:1px solid var(--green)}
-    .result-flash{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);font-family:'Anton',sans-serif;font-size:44px;pointer-events:none;opacity:0;transition:opacity .15s;text-shadow:0 0 20px currentColor;z-index:10;white-space:nowrap}
-    .result-flash.show{opacity:1}
-    @keyframes shakeg{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
-    .shakeg{animation:shakeg .4s ease}
-    /* CAP SHUFFLE */
-    .caps-arena{position:relative;height:170px;margin:10px 0;user-select:none}
-    .cap{position:absolute;bottom:0;cursor:pointer;transition:left .35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;align-items:center;gap:4px;-webkit-tap-highlight-color:transparent}
-    .cap svg{width:68px;height:50px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.4));transition:transform .2s}
-    .cap:active svg{transform:scale(.93)}
-    .cap .cap-lbl{font-size:9px;font-weight:700;color:var(--dim);letter-spacing:1px}
-    .ball-peek{font-size:18px;position:absolute;bottom:52px;left:50%;transform:translateX(-50%);opacity:0;transition:opacity .3s;pointer-events:none}
-    .cap.reveal .ball-peek{opacity:1}
-    .shuffle-msg{text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px;min-height:18px}
-    .speed-bar{display:flex;gap:5px;align-items:center;margin-bottom:10px}
-    .speed-seg{height:6px;flex:1;border-radius:3px;background:#1e3a26;transition:background .3s}
-    .speed-seg.lit{background:var(--green)}
-    .speed-seg.lit.fast{background:var(--yellow)}
-    .speed-seg.lit.danger{background:var(--crimson)}
-    /* BASERUNNING */
-    #base-field{position:relative;width:100%;aspect-ratio:1;max-height:260px;background:radial-gradient(ellipse at 50% 60%,#2d5a1b 0%,#1a3a0f 60%,#0f2008 100%);border-radius:12px;overflow:hidden;margin:10px 0;user-select:none}
-    .base{position:absolute;width:13%;aspect-ratio:1;background:#fff;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#000;box-shadow:0 2px 8px rgba(0,0,0,.4)}
-    .base.active{background:var(--yellow);box-shadow:0 0 12px var(--yellow)}
-    .base.safe{background:var(--green);box-shadow:0 0 12px var(--green)}
-    #runner{position:absolute;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--navy));border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:12px;transition:left .28s ease,top .28s ease;z-index:5;box-shadow:0 0 10px rgba(206,17,65,.5)}
-    #fielder{position:absolute;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#1e3a46,#0a1628);border:2px solid var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;transition:left .22s ease,top .22s ease;z-index:4}
-    .base-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-    .base-btn{padding:13px;border:none;border-radius:10px;font-family:'Anton',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}
-    .base-btn:active{transform:scale(.95)}
-    .base-btn.run{background:var(--green);color:#fff}
-    .base-btn.slide{background:var(--yellow);color:#000}
-    .base-btn.stop{background:#1e3a26;color:var(--green);border:1px solid var(--green)}
-    .base-btn.home{background:var(--red);color:#fff}
-    .out-indicator{display:flex;gap:6px;align-items:center;margin-bottom:8px}
-    .out-dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--crimson);background:transparent}
-    .out-dot.lit{background:var(--crimson)}
-    .base-event{text-align:center;font-size:12px;color:var(--muted);min-height:16px;margin:5px 0}
+    /* CHOP BOT */
+    .cb-hero{display:flex;flex-direction:column;align-items:center;padding:8px 0 4px;position:relative}
+    .cb-glow{position:absolute;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(206,17,65,.12) 0%,rgba(0,43,92,.1) 45%,transparent 70%);top:0;left:50%;transform:translateX(-50%);pointer-events:none}
+    .cb-name{font-family:'Anton',sans-serif;font-size:26px;color:var(--green);letter-spacing:3px;text-shadow:0 0 14px rgba(34,197,94,.4);margin-top:4px}
+    .cb-status-bar{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-bottom:10px;letter-spacing:1px}
+    .cb-sdot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite;flex-shrink:0}
+    /* Character base */
+    #cb-bot{animation:cb-float 3.2s ease-in-out infinite;display:block}
+    #cb-bot.talking{animation:cb-talkbob .28s ease-in-out infinite}
+    #cb-bot.happy{animation:cb-bounce .6s ease-in-out 2}
+    #cb-bot.happy #cb-teeth{opacity:.8!important}
+    #cb-bot.thinking #cb-brow-l,#cb-bot.thinking #cb-brow-r{animation:cb-browup .9s ease-in-out infinite}
+    #cb-bot.thinking .cb-pupil{animation:cb-think .9s ease-in-out infinite}
+    .cb-lid{transform:scaleY(0);transform-box:fill-box;transform-origin:center;transition:transform .08s}
+    #cb-bot.blink .cb-lid{transform:scaleY(1)}
+    .cb-pupil{transform-box:fill-box;transform-origin:center}
+    /* Base keyframes */
+    @keyframes cb-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+    @keyframes cb-talkbob{0%,100%{transform:translateY(0) rotate(-1.2deg)}50%{transform:translateY(-4px) rotate(1.2deg)}}
+    @keyframes cb-bounce{0%,100%{transform:translateY(0) scale(1)}25%{transform:translateY(-22px) scale(1.04,.96)}55%{transform:translateY(-9px) scale(.98,1.02)}75%{transform:translateY(-16px) scale(1.02)}}
+    @keyframes cb-browup{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+    @keyframes cb-think{0%,100%{transform:translate(0,0)}50%{transform:translate(-5px,-3px)}}
+    /* SCORE PREDICTOR */
+    .pred-card{background:linear-gradient(135deg,#0d1a0f,#0a1628);border:1px solid #22c55e44;border-radius:14px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden}
+    .pred-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--green),var(--red))}
+    .pred-pickers{display:flex;justify-content:center;align-items:flex-start;gap:28px;margin-bottom:18px}
+    .pred-team{display:flex;flex-direction:column;align-items:center;gap:6px}
+    .pred-team-lbl{font-size:10px;color:var(--muted);letter-spacing:2px;font-weight:700}
+    .pred-adj{width:52px;height:40px;border:1px solid var(--border);border-radius:8px;background:#0a1410;color:var(--text);font-size:20px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .1s;display:flex;align-items:center;justify-content:center}
+    .pred-adj:active{background:var(--navy)}
+    .pred-num{font-family:'Anton',sans-serif;font-size:56px;color:#fff;line-height:1;width:72px;text-align:center}
+    .pred-lock-btn{width:100%;padding:16px;border:none;border-radius:12px;background:var(--red);color:#fff;font-family:'Anton',sans-serif;font-size:20px;letter-spacing:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s}
+    .pred-lock-btn:active{transform:scale(.97)}
+    .pred-locked{background:#0a1410;border:1px solid #22c55e55;border-radius:10px;padding:12px 14px;text-align:center;font-size:14px;color:var(--green)}
+    .pred-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+    .pred-row:last-child{border-bottom:none}
+    .pred-badge{padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700}
+    .pred-badge.exact{background:#22c55e22;color:var(--green);border:1px solid #22c55e55}
+    .pred-badge.close{background:#facc1522;color:var(--yellow);border:1px solid #facc1555}
+    .pred-badge.winner{background:#38bdf822;color:var(--blue);border:1px solid #38bdf855}
+    .pred-badge.miss{background:#ef444422;color:var(--crimson);border:1px solid #ef444455}
+    .pred-badge.pending{background:#1e3a2622;color:var(--dim);border:1px solid var(--border)}
+    /* Suggestions */
+    .csugg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+    .csugg-btn{background:#0a1410;border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:11px;color:var(--muted);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;font-family:'DM Sans',sans-serif;white-space:nowrap}
+    .csugg-btn:active{background:var(--navy);color:var(--text);border-color:var(--blue)}
+    /* Chat */
+    .chat-area{background:var(--card);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
+    .chat-msgs{overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:14px 12px;min-height:180px;max-height:340px;-webkit-overflow-scrolling:touch}
+    .chat-msgs::-webkit-scrollbar{display:none}
+    .cmsg{display:flex;gap:8px;align-items:flex-end;max-width:88%}
+    .cmsg.user{align-self:flex-end;flex-direction:row-reverse}
+    .cmsg.bot{align-self:flex-start}
+    .cbubble{padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.6;word-break:break-word}
+    .cmsg.user .cbubble{background:var(--red);color:#fff;border-bottom-right-radius:4px}
+    .cmsg.bot .cbubble{background:#0d1a14;border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
+    .cavy{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--red));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+    .ctyping{display:flex;gap:4px;align-items:center;padding:2px 0}
+    .ctyping span{width:7px;height:7px;border-radius:50%;background:var(--green);animation:ctype 1s ease-in-out infinite}
+    .ctyping span:nth-child(2){animation-delay:.2s}
+    .ctyping span:nth-child(3){animation-delay:.4s}
+    @keyframes ctype{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
+    .chat-irow{border-top:1px solid var(--border);padding:10px 12px;display:flex;gap:8px;background:#0a1410}
+    .cinput{flex:1;background:#0d1a0f;border:1px solid var(--border);border-radius:12px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;resize:none;line-height:1.3;min-height:44px;max-height:88px}
+    .cinput:focus{border-color:#22c55e55}
+    .csend{width:44px;height:44px;border:none;border-radius:12px;background:var(--red);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:transform .1s,opacity .1s}
+    .csend:active{transform:scale(.9)}
+    .csend:disabled{opacity:.35;cursor:not-allowed}
+    /* HEALTH MONITOR */
+    #health-dot{width:9px;height:9px;border-radius:50%;transition:all .3s;cursor:pointer;flex-shrink:0;margin-left:auto}
+    #health-dot.green{background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,.6)}
+    #health-dot.yellow{background:#facc15;box-shadow:0 0 8px rgba(250,204,21,.6)}
+    #health-dot.red{background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,.7);animation:pulse .7s infinite}
+    .h-ov{position:fixed;inset:0;background:rgba(5,10,8,.97);z-index:500;display:flex;flex-direction:column;overscroll-behavior:none}
+    .h-hdr{display:flex;align-items:center;justify-content:space-between;padding:calc(var(--safe-top,0px) + 14px) 16px 14px;background:#0a1410;border-bottom:1px solid var(--border);flex-shrink:0}
+    .h-ttl{font-family:'Anton',sans-serif;font-size:20px;letter-spacing:1px}
+    .h-cls{background:none;border:none;color:var(--dim);font-size:30px;cursor:pointer;line-height:1;padding:0 4px}
+    .h-body{flex:1;overflow-y:auto;padding:14px 12px calc(24px + var(--safe-bottom,0px));-webkit-overflow-scrolling:touch}
+    .h-sg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+    .h-s{background:#0d1a0f;border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center}
+    .h-sv{font-family:'Anton',sans-serif;font-size:24px;line-height:1}
+    .h-sl{font-size:9px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px}
+    .h-sys{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+    .h-sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .h-sn{font-size:13px;font-weight:700;flex:1}
+    .h-ss{font-size:11px;color:var(--muted)}
+    .h-ev{padding:9px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start}
+    .h-ei{font-size:14px;width:20px;flex-shrink:0;text-align:center;margin-top:1px}
+    .h-em{font-size:12px;line-height:1.5;flex:1}
+    .h-et{font-size:9px;color:var(--dim);font-family:'JetBrains Mono',monospace;margin-top:2px}
+    .h-empty{text-align:center;color:var(--dim);padding:24px;font-size:13px}
   </style>
 </head>
 <body>
@@ -195,8 +236,8 @@
         <div class="hdr-sub">2026 · NL EAST · LIVE</div>
       </div>
       <div style="margin-left:auto;text-align:right">
-        <div class="hdr-rec" id="hdr-rec">39-19</div>
-        <div class="hdr-rec-sub">1ST · NL EAST · .672</div>
+        <div class="hdr-rec" id="hdr-rec">40-19</div>
+        <div class="hdr-rec-sub" id="hdr-rec-sub">1ST · NL EAST · .678</div>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
@@ -204,7 +245,8 @@
         <div class="pulse"></div>
         <span id="refresh-label">Refreshing every 2 min</span>
       </div>
-      <div style="font-size:9px;color:var(--dim)" id="last-updated"></div>
+      <div style="font-size:9px;color:var(--dim);flex:1" id="last-updated"></div>
+      <div id="health-dot" class="green" onclick="showHealth()" title="System Health — tap to view"></div>
     </div>
   </div>
 
@@ -218,9 +260,7 @@
   <nav class="bnav">
     <button class="nbtn active" onclick="showTab('overview',this)"><span class="ni">🏠</span><span class="nl">Home</span></button>
     <button class="nbtn" onclick="showTab('stats',this)"><span class="ni">📈</span><span class="nl">Stats</span></button>
-    <button class="nbtn" onclick="showTab('series',this)"><span class="ni">📅</span><span class="nl">Series</span></button>
     <button class="nbtn" onclick="showTab('standings',this)"><span class="ni">📊</span><span class="nl">Standings</span></button>
-    <button class="nbtn" onclick="showTab('games',this)"><span class="ni">🎮</span><span class="nl">Games</span></button>
   </nav>
 </div>
 
@@ -229,43 +269,114 @@ const MLB_BAT={avg:.248,obp:.318,slg:.413,ops:.731,hr:14,rbi:52,sb:8};
 const MLB_PIT={era:4.20,whip:1.28,k9:8.8,bb9:3.2,fip:4.15};
 let DATA=null, currentTab='overview', refreshTimer=null, aiInsightCache='';
 
+// ── HEALTH MONITOR ──
+const HEALTH=(()=>{
+  const KEY='braves_hlog';
+  let log=[];
+  let st={calls:0,errs:0,fixes:0,warns:0,start:Date.now(),lastSync:null,lastSyncPlayers:0};
+  let status='green';
+  try{log=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){}
+
+  function _dot(){const d=document.getElementById('health-dot');if(d){d.className=status}}
+  function _save(){try{localStorage.setItem(KEY,JSON.stringify(log.slice(0,150)))}catch(e){}}
+
+  function _add(icon,type,msg){
+    log.unshift({icon,type,msg,ts:Date.now(),t:new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit'})});
+    if(log.length>200)log=log.slice(0,200);
+    _save();_dot();
+  }
+
+  function fix(msg){st.fixes++;if(status==='red')status='yellow';_add('🔧','fix',msg);}
+  function warn(msg){st.warns++;if(status==='green')status='yellow';_add('⚠️','warn',msg);}
+  function err(msg){st.errs++;status='red';_add('❌','err',msg);}
+  function ok(msg,players=0){st.lastSync=Date.now();st.lastSyncPlayers=players;if(status!=='red')status='green';_add('✅','ok',msg);_dot();}
+  function info(msg){_add('ℹ️','info',msg);}
+
+  async function safeFetch(url,retries=3){
+    st.calls++;
+    const label=url.split('?')[0].split('/').slice(-2).join('/');
+    for(let i=0;i<retries;i++){
+      try{
+        const ctrl=typeof AbortController!=='undefined'?new AbortController():null;
+        const tid=ctrl?setTimeout(()=>ctrl.abort(),8000):null;
+        const res=await fetch(url,ctrl?{signal:ctrl.signal}:{});
+        if(tid)clearTimeout(tid);
+        if(!res.ok)throw new Error(`HTTP ${res.status}`);
+        return res;
+      }catch(e){
+        if(i<retries-1){
+          const wait=(i+1)*900;
+          fix(`Retry ${i+1}/${retries-1} for ${label} (${e.message}) — waiting ${wait}ms`);
+          await new Promise(r=>setTimeout(r,wait));
+        }else{
+          err(`${label} failed after ${retries} attempts: ${e.message}`);
+          throw e;
+        }
+      }
+    }
+  }
+
+  function safeRender(name,fn){
+    try{fn();}catch(e){
+      fix(`Render crash in "${name}": ${e.message} — showing recovery UI`);
+      const c=document.getElementById('content');
+      if(c)c.innerHTML=`<div class="card" style="text-align:center;border-color:var(--crimson);margin-top:20px">
+        <div style="color:var(--crimson);margin-bottom:12px;font-size:13px">⚠️ "${name}" tab crashed and was recovered</div>
+        <button onclick="renderTab(currentTab)" style="padding:10px 24px;border:1px solid var(--green);border-radius:8px;background:none;color:var(--green);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer">↺ Reload Tab</button>
+      </div>`;
+    }
+  }
+
+  function uptime(){
+    const ms=Date.now()-st.start;
+    const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);
+    return h?`${h}h ${m}m`:m?`${m}m ${s}s`:`${s}s`;
+  }
+
+  function getLog(){return log;}
+  function getSt(){return{...st,status};}
+  function clearLog(){log=[];_save();fix('Health log cleared manually');}
+
+  return{fix,warn,err,ok,info,safeFetch,safeRender,uptime,getLog,getSt,clearLog};
+})();
+
 const SEED={
-  record:{w:39,l:19,pct:'.672',home:'21-8',away:'18-11',last10:'7-3',runDiff:'+56'},
+  record:{w:40,l:19,pct:'.678',home:'21-8',away:'19-11',last10:'8-2',runDiff:'+62'},
   weather:{condition:'Partly Cloudy',emoji:'⛅',temp:81,feelsLike:86,humidity:62,wind:7,windDir:'SW',rainChance:15,hiTemp:84,loTemp:68,uvIndex:7,
     forecast:[{day:'Today',hi:84,lo:68,icon:'⛅',rain:15},{day:'Sun',hi:87,lo:70,icon:'☀️',rain:5},{day:'Mon',hi:85,lo:69,icon:'⛅',rain:10},{day:'Tue',hi:83,lo:68,icon:'🌦️',rain:35},{day:'Wed',hi:80,lo:66,icon:'🌧️',rain:60}],alert:null},
   batters:[
-    {name:'Ronald Acuña Jr.',pos:'RF',avg:.289,obp:.378,slg:.501,ops:.879,hr:12,rbi:38,sb:18},
-    {name:'Matt Olson',      pos:'1B',avg:.274,obp:.368,slg:.521,ops:.889,hr:16,rbi:47,sb:1},
-    {name:'Austin Riley',   pos:'3B',avg:.261,obp:.335,slg:.498,ops:.833,hr:13,rbi:41,sb:2},
-    {name:'Ozzie Albies',   pos:'2B',avg:.255,obp:.316,slg:.438,ops:.754,hr:9, rbi:31,sb:6},
-    {name:'Michael Harris II',pos:'CF',avg:.264,obp:.328,slg:.451,ops:.779,hr:8,rbi:29,sb:11},
-    {name:'Dominic Smith',  pos:'DH',avg:.251,obp:.321,slg:.418,ops:.739,hr:7, rbi:26,sb:0},
-    {name:'Mike Yastrzemski',pos:'LF',avg:.248,obp:.334,slg:.412,ops:.746,hr:6,rbi:22,sb:3},
-    {name:'Jorge Mateo',    pos:'SS',avg:.243,obp:.298,slg:.381,ops:.679,hr:4, rbi:19,sb:8},
-    {name:'Chadwick Tromp', pos:'C', avg:.237,obp:.302,slg:.389,ops:.691,hr:5, rbi:18,sb:0},
-    {name:'Kyle Farmer',    pos:'UT',avg:.244,obp:.308,slg:.375,ops:.683,hr:3, rbi:14,sb:1},
+    {name:'Drake Baldwin',     pos:'C', avg:.303,obp:.389,slg:.543,ops:.932,hr:13,rbi:38,sb:1},
+    {name:'Matt Olson',        pos:'1B',avg:.263,obp:.342,slg:.547,ops:.889,hr:16,rbi:45,sb:1},
+    {name:'Jorge Mateo',       pos:'SS',avg:.316,obp:.357,slg:.519,ops:.876,hr:4, rbi:11,sb:7},
+    {name:'Michael Harris II', pos:'CF',avg:.309,obp:.340,slg:.529,ops:.869,hr:13,rbi:36,sb:3},
+    {name:'Dominic Smith',     pos:'DH',avg:.325,obp:.351,slg:.496,ops:.847,hr:5, rbi:25,sb:0},
+    {name:'Ronald Acuña Jr.',  pos:'RF',avg:.249,obp:.374,slg:.438,ops:.812,hr:7, rbi:20,sb:12},
+    {name:'Ozzie Albies',      pos:'2B',avg:.275,obp:.329,slg:.433,ops:.762,hr:9, rbi:29,sb:0},
+    {name:'Mike Yastrzemski',  pos:'LF',avg:.245,obp:.327,slg:.374,ops:.701,hr:3, rbi:17,sb:1},
+    {name:'Mauricio Dubón',    pos:'SS',avg:.251,obp:.308,slg:.372,ops:.680,hr:3, rbi:29,sb:0},
+    {name:'Austin Riley',      pos:'3B',avg:.210,obp:.286,slg:.365,ops:.651,hr:8, rbi:32,sb:3},
   ],
   pitchers:[
-    {name:'Chris Sale',      pos:'SP',era:3.01,whip:1.06,k9:11.2,bb9:2.2,fip:3.08,w:8,sv:0},
-    {name:'Grant Holmes',   pos:'SP',era:3.74,whip:1.19,k9:9.1, bb9:3.0,fip:3.81,w:6,sv:0},
-    {name:'Reynaldo López', pos:'SP',era:3.91,whip:1.23,k9:9.4, bb9:3.1,fip:3.98,w:5,sv:0},
-    {name:'Bryce Elder',    pos:'SP',era:4.12,whip:1.28,k9:8.6, bb9:3.4,fip:4.19,w:4,sv:0},
-    {name:'Didier Fuentes', pos:'SP',era:3.44,whip:1.14,k9:10.2,bb9:2.8,fip:3.51,w:3,sv:0},
-    {name:'Raisel Iglesias',pos:'RP',era:2.38,whip:0.97,k9:11.4,bb9:2.1,fip:2.44,w:2,sv:16},
-    {name:'Robert Suárez',  pos:'RP',era:2.91,whip:1.04,k9:10.8,bb9:2.4,fip:2.98,w:1,sv:3},
-    {name:'Tyler Kinley',   pos:'RP',era:3.18,whip:1.12,k9:9.6, bb9:2.9,fip:3.24,w:2,sv:1},
-    {name:'Dylan Lee',      pos:'RP',era:2.76,whip:1.01,k9:11.0,bb9:2.3,fip:2.83,w:1,sv:0},
-    {name:'Aaron Bummer',   pos:'RP',era:3.42,whip:1.18,k9:9.2, bb9:3.2,fip:3.49,w:1,sv:0},
+    {name:'Chris Sale',      pos:'SP',era:2.01,whip:0.94,k9:10.75,bb9:2.28,fip:3.01,w:8,sv:0},
+    {name:'Bryce Elder',     pos:'SP',era:2.50,whip:1.08,k9:7.63, bb9:2.75,fip:3.44,w:4,sv:0},
+    {name:'Martín Pérez',    pos:'SP',era:2.79,whip:1.06,k9:7.32, bb9:3.14,fip:3.89,w:3,sv:0},
+    {name:'Reynaldo López',  pos:'SP',era:3.41,whip:1.34,k9:7.60, bb9:4.19,fip:4.12,w:2,sv:0},
+    {name:'Spencer Strider', pos:'SP',era:3.77,whip:1.26,k9:11.61,bb9:4.94,fip:3.92,w:3,sv:0},
+    {name:'Grant Holmes',    pos:'SP',era:3.95,whip:1.33,k9:8.37, bb9:3.95,fip:4.38,w:3,sv:0},
+    {name:'Robert Suarez',   pos:'RP',era:0.71,whip:0.83,k9:7.82, bb9:1.78,fip:2.44,w:4,sv:4},
+    {name:'Raisel Iglesias', pos:'RP',era:1.02,whip:0.85,k9:10.70,bb9:1.53,fip:2.18,w:0,sv:10},
+    {name:'Dylan Lee',       pos:'RP',era:1.30,whip:0.61,k9:11.06,bb9:0.98,fip:1.92,w:2,sv:0},
+    {name:'Tyler Kinley',    pos:'RP',era:3.16,whip:1.17,k9:9.82, bb9:3.16,fip:3.58,w:4,sv:0},
   ],
   nle:[
-    {name:'Atlanta Braves',       abbr:'ATL',w:39,l:19},
+    {name:'Atlanta Braves',       abbr:'ATL',w:40,l:19},
     {name:'Philadelphia Phillies',abbr:'PHI',w:29,l:28},
     {name:'Washington Nationals', abbr:'WSH',w:29,l:29},
     {name:'Miami Marlins',        abbr:'MIA',w:26,l:32},
     {name:'New York Mets',        abbr:'NYM',w:24,l:33},
   ],
   mlbTop:[
-    {name:'Atlanta Braves',       abbr:'ATL',w:39,l:19},
+    {name:'Atlanta Braves',       abbr:'ATL',w:40,l:19},
     {name:'Los Angeles Dodgers',  abbr:'LAD',w:37,l:20},
     {name:'Tampa Bay Rays',       abbr:'TB', w:35,l:19},
     {name:'Milwaukee Brewers',    abbr:'MIL',w:34,l:20},
@@ -275,13 +386,12 @@ const SEED={
     {name:'Chicago Cubs',         abbr:'CHC',w:31,l:27},
   ],
   nextGames:[
-    {n:1,date:'Sat May 30',time:'7:15 PM EDT',opp:'CIN',loc:'@ Great American Ball Park'},
-    {n:2,date:'Sun May 31',time:'1:40 PM EDT',opp:'CIN',loc:'@ Great American Ball Park'},
-    {n:3,date:'Tue Jun 2', time:'7:15 PM EDT',opp:'TOR',loc:'Truist Park'},
+    {n:1,date:'Sun May 31',time:'1:40 PM EDT',opp:'CIN',loc:'@ Great American Ball Park'},
+    {n:2,date:'Tue Jun 2', time:'7:15 PM EDT',opp:'TOR',loc:'Truist Park'},
   ],
   nextOpp:{name:'Cincinnati Reds',abbr:'CIN',rec:'29-27',era:'4.41',avg:'.254'},
   matchup:[
-    {label:'Overall Record',   atl:'39-19 (.672)',opp:'29-27 (.518)',favors:'ATL'},
+    {label:'Overall Record',   atl:'40-19 (.678)',opp:'29-27 (.518)',favors:'ATL'},
     {label:'Team ERA',         atl:'3.48',         opp:'4.41',        favors:'ATL'},
     {label:'Team AVG',         atl:'.263',         opp:'.254',        favors:'ATL'},
     {label:'Run Differential', atl:'+56',          opp:'+12',         favors:'ATL'},
@@ -289,40 +399,39 @@ const SEED={
     {label:'Bullpen ERA',      atl:'3.01',         opp:'4.18',        favors:'ATL'},
   ],
   lastGame:{
-    date:'Fri, May 29, 2026',away:{abbr:'ATL',runs:8,hits:13,errors:0},
-    home:{abbr:'CIN',runs:3,hits:10,errors:0},venue:'Great American Ball Park',
-    winner:'Didier Fuentes',loser:'Chris Paddack',
-    recap:"Didier Fuentes delivered a gem and Michael Harris II drove in three runs as Atlanta rolled past Cincinnati 8-3 Friday night. Ronald Acuña Jr. added a solo home run as the Braves stayed hot — five wins in their last six games.",
-    innings:[{inn:'1',atl:1,cin:0},{inn:'2',atl:3,cin:0},{inn:'3',atl:0,cin:0},{inn:'4',atl:0,cin:2},{inn:'5',atl:0,cin:1},{inn:'6',atl:4,cin:0},{inn:'7',atl:0,cin:0},{inn:'8',atl:0,cin:0},{inn:'9',atl:0,cin:0}],
+    date:'Sat, May 30, 2026',away:{abbr:'ATL',runs:5,hits:10,errors:0},
+    home:{abbr:'CIN',runs:2,hits:7,errors:1},venue:'Great American Ball Park',
+    winner:'Grant Holmes',loser:'Nick Lodolo',
+    recap:"Grant Holmes was sharp through six innings as Atlanta beat Cincinnati 5-2 Saturday to take the series. Matt Olson drove in two runs and Austin Riley added a solo shot to power the Braves offense — Atlanta has now won three straight and six of their last seven.",
+    innings:[{inn:'1',atl:0,cin:0},{inn:'2',atl:2,cin:0},{inn:'3',atl:0,cin:1},{inn:'4',atl:1,cin:0},{inn:'5',atl:0,cin:1},{inn:'6',atl:2,cin:0},{inn:'7',atl:0,cin:0},{inn:'8',atl:0,cin:0},{inn:'9',atl:0,cin:0}],
     keyMoments:[
-      {inn:'1st',icon:'💥',player:'Mike Yastrzemski',  desc:'RBI double — Braves strike first',           score:'ATL 1, CIN 0'},
-      {inn:'2nd',icon:'🚀',player:'Michael Harris II', desc:'3-run double — blows it wide open early',    score:'ATL 4, CIN 0'},
-      {inn:'4th',icon:'⚾',player:'Didier Fuentes',    desc:'Escapes jam with back-to-back strikeouts',   score:'ATL 4, CIN 2'},
-      {inn:'6th',icon:'💫',player:'Ronald Acuña Jr.',  desc:'Solo HR — 12th of the season',               score:'ATL 5, CIN 2'},
-      {inn:'6th',icon:'🔥',player:'Jorge Mateo',       desc:'2-RBI single caps the 6th — Braves cruise',  score:'ATL 8, CIN 2'},
+      {inn:'2nd',icon:'💥',player:'Matt Olson',        desc:'2-run single — Braves draw first blood',     score:'ATL 2, CIN 0'},
+      {inn:'3rd',icon:'⚾',player:'Grant Holmes',       desc:'Works out of bases-loaded jam',               score:'ATL 2, CIN 1'},
+      {inn:'4th',icon:'🚀',player:'Austin Riley',       desc:'Solo HR — 14th of the season',               score:'ATL 3, CIN 1'},
+      {inn:'6th',icon:'🔥',player:'Michael Harris II',  desc:'RBI double — extends the lead',              score:'ATL 4, CIN 1'},
+      {inn:'6th',icon:'💫',player:'Ronald Acuña Jr.',   desc:'RBI single — puts it away',                  score:'ATL 5, CIN 1'},
     ],
     atlBatters:[
-      {name:'Ronald Acuña Jr.',  pos:'RF',ab:5,h:1,hr:1,rbi:1,r:1,note:'Solo HR 💥'},
-      {name:'Matt Olson',        pos:'1B',ab:5,h:2,hr:0,rbi:0,r:2,note:'2 hits'},
-      {name:'Austin Riley',      pos:'3B',ab:5,h:0,hr:0,rbi:0,r:2,note:'0-for-5'},
-      {name:'Dominic Smith',     pos:'DH',ab:5,h:3,hr:0,rbi:0,r:2,note:'3 hits'},
-      {name:'Michael Harris II', pos:'CF',ab:5,h:3,hr:0,rbi:3,r:0,note:'3 RBI 🔥'},
-      {name:'Mike Yastrzemski',  pos:'LF',ab:4,h:2,hr:0,rbi:1,r:1,note:'RBI double'},
-      {name:'Ozzie Albies',      pos:'2B',ab:5,h:1,hr:0,rbi:0,r:1,note:''},
-      {name:'Jorge Mateo',       pos:'SS',ab:4,h:1,hr:0,rbi:2,r:2,note:'2 RBI single'},
-      {name:'Chadwick Tromp',    pos:'C', ab:4,h:0,hr:0,rbi:1,r:0,note:'Sac fly RBI'},
+      {name:'Ronald Acuña Jr.',  pos:'RF',ab:4,h:2,hr:0,rbi:1,r:1,note:'RBI single'},
+      {name:'Matt Olson',        pos:'1B',ab:4,h:2,hr:0,rbi:2,r:1,note:'2 RBI 🔥'},
+      {name:'Austin Riley',      pos:'3B',ab:4,h:1,hr:1,rbi:1,r:2,note:'Solo HR 💥'},
+      {name:'Ozzie Albies',      pos:'2B',ab:4,h:1,hr:0,rbi:0,r:0,note:''},
+      {name:'Michael Harris II', pos:'CF',ab:4,h:2,hr:0,rbi:1,r:1,note:'RBI double'},
+      {name:'Dominic Smith',     pos:'DH',ab:4,h:1,hr:0,rbi:0,r:0,note:''},
+      {name:'Mike Yastrzemski',  pos:'LF',ab:3,h:1,hr:0,rbi:0,r:0,note:''},
+      {name:'Jorge Mateo',       pos:'SS',ab:3,h:0,hr:0,rbi:0,r:1,note:''},
+      {name:'Chadwick Tromp',    pos:'C', ab:3,h:0,hr:0,rbi:0,r:0,note:''},
     ],
     atlPitchers:[
-      {name:'Didier Fuentes', role:'SP (W)',ip:'5.1',h:7,er:3,k:5,bb:1,note:'Win vs CIN 🔥'},
-      {name:'Dylan Lee',      role:'RP',   ip:'1.0',h:0,er:0,k:3,bb:0,note:'3 K inning'},
+      {name:'Grant Holmes',   role:'SP (W)',ip:'6.0',h:5,er:2,k:6,bb:2,note:'Win vs CIN 🔥'},
+      {name:'Dylan Lee',      role:'RP',   ip:'1.0',h:0,er:0,k:2,bb:0,note:'Scoreless'},
       {name:'Robert Suárez',  role:'RP',   ip:'1.0',h:1,er:0,k:1,bb:0,note:'Scoreless'},
-      {name:'Tyler Kinley',   role:'RP',   ip:'1.0',h:1,er:0,k:1,bb:0,note:'Scoreless'},
-      {name:'Aaron Bummer',   role:'RP',   ip:'0.2',h:1,er:0,k:1,bb:0,note:''},
+      {name:'Raisel Iglesias',role:'RP',   ip:'1.0',h:1,er:0,k:2,bb:0,note:'Save #17'},
     ],
     recentResults:[
-      {date:'May 27',opp:'BOS',r:'L',score:'0-8'},
       {date:'May 28',opp:'BOS',r:'W',score:'10-2'},
       {date:'May 29',opp:'CIN',r:'W',score:'8-3'},
+      {date:'May 30',opp:'CIN',r:'W',score:'5-2'},
     ],
   },
 };
@@ -334,20 +443,200 @@ function sc(v,a,low=false){const d=low?a-v:v-a;return d>0.05*a?'var(--green)':d<
 function badge(v,a,low,fmt){const c=sc(v,a,low);const cls=c.includes('green')?'badge bg':c.includes('crimson')?'badge br':'badge by';return`<span class="${cls}">${fmt?fmt(v):v}</span>`}
 function stamp(){return new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true})}
 
+// ── MLB LIVE DATA ──
+const ATL_ID=144, NLE_DIV=204;
+function _pad(n){return String(n).padStart(2,'0')}
+function _fmtDate(d){return`${d.getFullYear()}-${_pad(d.getMonth()+1)}-${_pad(d.getDate())}`}
+function _shortDate(s){const[,m,d]=s.split('-');return['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m)-1]+' '+parseInt(d)}
+function _longDate(s){return new Date(s+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'})}
+function _dayLabel(s){return new Date(s+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}
+function _gameTime(iso){if(!iso)return'TBD';try{return new Date(iso).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'America/New_York'})+' EDT'}catch(e){return'TBD'}}
+
+async function fetchLiveData(){
+  const season=new Date().getFullYear();
+  const today=new Date();
+  const start=_fmtDate(new Date(+today-14*864e5));
+  const end=_fmtDate(new Date(+today+7*864e5));
+  const base=`https://statsapi.mlb.com/api/v1`;
+  const [sr,gr,br,pr,rr]=await Promise.all([
+    HEALTH.safeFetch(`${base}/standings?leagueId=104&season=${season}&standingsTypes=regularSeason&hydrate=team,records`),
+    HEALTH.safeFetch(`${base}/schedule?sportId=1&teamId=${ATL_ID}&startDate=${start}&endDate=${end}&hydrate=linescore,team`),
+    HEALTH.safeFetch(`${base}/stats?stats=season&group=hitting&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=40&sportId=1&gameType=R`).catch(()=>null),
+    HEALTH.safeFetch(`${base}/stats?stats=season&group=pitching&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=40&sportId=1&gameType=R`).catch(()=>null),
+    HEALTH.safeFetch(`${base}/teams/${ATL_ID}/roster?rosterType=active&season=${season}`).catch(()=>null)
+  ]);
+  return{
+    standings:await sr.json(),
+    schedule:await gr.json(),
+    batting:br?await br.json():null,
+    pitching:pr?await pr.json():null,
+    roster:rr?await rr.json():null
+  };
+}
+
+function mergeLiveData(seed,live){
+  const d=JSON.parse(JSON.stringify(seed));
+  // ── Standings ──
+  const allTeams=[];
+  for(const div of live.standings.records||[]){
+    const isNLE=div.division?.id===NLE_DIV;
+    const divTeams=[];
+    for(const tr of div.teamRecords||[]){
+      const abbr=tr.team.abbreviation||tr.team.name.split(' ').pop().slice(0,3).toUpperCase();
+      const rec={name:tr.team.name,abbr,w:tr.wins,l:tr.losses};
+      allTeams.push(rec);
+      if(isNLE) divTeams.push(rec);
+      if(tr.team.id===ATL_ID){
+        d.record.w=tr.wins; d.record.l=tr.losses;
+        d.record.pct=tr.winningPercentage||pct(tr.wins,tr.losses);
+        const splits=tr.records?.splitRecords||[];
+        const hm=splits.find(s=>s.type==='home');
+        const aw=splits.find(s=>s.type==='away');
+        const l10=splits.find(s=>s.type==='lastTen');
+        if(hm) d.record.home=`${hm.wins}-${hm.losses}`;
+        if(aw) d.record.away=`${aw.wins}-${aw.losses}`;
+        if(l10) d.record.last10=`${l10.wins}-${l10.losses}`;
+        const diff=(tr.runsScored||0)-(tr.runsAllowed||0);
+        if(diff!==0) d.record.runDiff=diff>=0?`+${diff}`:`${diff}`;
+        // keep matchup record row live
+        d.matchup[0].atl=`${tr.wins}-${tr.losses} (${tr.winningPercentage||pct(tr.wins,tr.losses)})`;
+        d.matchup[3].atl=d.record.runDiff;
+      }
+    }
+    if(isNLE&&divTeams.length){
+      divTeams.sort((a,b)=>(b.w/(b.w+b.l))-(a.w/(a.w+a.l)));
+      d.nle=divTeams;
+    }
+  }
+  if(allTeams.length){
+    d.mlbTop=[...allTeams].sort((a,b)=>(b.w/(b.w+b.l))-(a.w/(a.w+a.l))).slice(0,8);
+  }
+  // ── Schedule ──
+  const completed=[],upcoming=[];
+  for(const day of live.schedule.dates||[]){
+    for(const g of day.games||[]){
+      const isHome=g.teams?.home?.team?.id===ATL_ID;
+      const atlT=isHome?g.teams.home:g.teams.away;
+      const oppT=isHome?g.teams.away:g.teams.home;
+      const state=g.status?.abstractGameState;
+      if(state==='Final'){
+        const ar=atlT.score??0,or=oppT.score??0;
+        completed.push({date:day.date,opp:oppT.team.abbreviation,r:ar>or?'W':'L',
+          score:`${ar}-${or}`,isHome,atlRuns:ar,oppRuns:or,venue:g.venue?.name,gameDate:g.gameDate});
+      }else if(state==='Preview'||state==='Scheduled'||state==='Pre-Game'){
+        upcoming.push({date:day.date,opp:oppT.team.abbreviation,isHome,venue:g.venue?.name,gameDate:g.gameDate});
+      }
+    }
+  }
+  completed.sort((a,b)=>a.date.localeCompare(b.date));
+  upcoming.sort((a,b)=>a.date.localeCompare(b.date));
+  if(completed.length){
+    // Store last 10 for predictor settlement — keep ISO date for reliable matching
+    d.completedGames=completed.slice(-10).map(g=>({isoDate:g.date,opp:g.opp,r:g.r,score:g.score}));
+    d.lastGame.recentResults=completed.slice(-5).map(g=>({date:_shortDate(g.date),opp:g.opp,r:g.r,score:g.score}));
+    const lg=completed[completed.length-1];
+    d.lastGame.date=_longDate(lg.date);
+    if(lg.isHome){d.lastGame.home={...d.lastGame.home,abbr:'ATL',runs:lg.atlRuns};d.lastGame.away={...d.lastGame.away,abbr:lg.opp,runs:lg.oppRuns};}
+    else{d.lastGame.away={...d.lastGame.away,abbr:'ATL',runs:lg.atlRuns};d.lastGame.home={...d.lastGame.home,abbr:lg.opp,runs:lg.oppRuns};}
+  }
+  if(upcoming.length){
+    // Include isoDate so predictor can do exact date matching
+    d.nextGames=upcoming.slice(0,3).map((g,i)=>({n:i+1,isoDate:g.date,date:_dayLabel(g.date),time:_gameTime(g.gameDate),opp:g.opp,loc:g.isHome?'Truist Park':`@ ${g.venue||g.opp}`}));
+    d.nextOpp={...d.nextOpp,abbr:upcoming[0].opp};
+  }
+  // ── Live player stats ──
+  // Build position map from active roster
+  const posMap={};
+  for(const p of live.roster?.roster||[]) posMap[p.person.id]=p.position?.abbreviation||'—';
+
+  const fp=v=>parseFloat(String(v||'0').replace(/[^0-9.\-]/g,''))||0;
+
+  if(live.batting){
+    // /stats endpoint returns splits directly under stats[0].splits
+    const splits=[...(live.batting.stats||[])].flatMap(s=>s.splits||[]);
+    const batters=splits
+      .filter(s=>(s.stat.plateAppearances||0)>=25)
+      .map(s=>({
+        name:s.player?.fullName||s.person?.fullName||'Unknown',
+        pos:posMap[s.player?.id||s.person?.id]||'—',
+        avg:fp(s.stat.avg),
+        obp:fp(s.stat.obp),
+        slg:fp(s.stat.slg),
+        ops:fp(s.stat.ops),
+        hr:s.stat.homeRuns||0,
+        rbi:s.stat.rbi||0,
+        sb:s.stat.stolenBases||0,
+      }))
+      .sort((a,b)=>b.ops-a.ops)
+      .slice(0,12);
+    if(batters.length>0){d.batters=batters;}
+    else{HEALTH.fix('Batting API returned 0 qualifying players — keeping SEED roster');}
+  }
+
+  if(live.pitching){
+    const splits=[...(live.pitching.stats||[])].flatMap(s=>s.splits||[]);
+    const FIP_C=3.15; // 2026 FIP constant
+    const pitchers=splits
+      .filter(s=>{
+        // Require at least 5 full innings to exclude position players who pitched
+        const ip=String(s.stat.inningsPitched||'0');
+        return(parseInt(ip.split('.')[0]||'0')>=5);
+      })
+      .map(s=>{
+        const st=s.stat;
+        const gs=st.gamesStarted||0,g=Math.max(st.gamesPitched||1,1);
+        const isSP=gs>=3&&(gs/g)>=0.4;
+        // Convert "67.0" / "67.1" / "67.2" to decimal IP for FIP
+        const ipParts=String(st.inningsPitched||'0').split('.');
+        const ipDec=(parseInt(ipParts[0]||'0'))+(parseInt(ipParts[1]||'0')/3);
+        const fipRaw=ipDec>0?((13*(st.homeRuns||0)+3*((st.baseOnBalls||0)+(st.hitByPitch||0))-2*(st.strikeOuts||0))/ipDec+FIP_C):0;
+        return{
+          name:s.player?.fullName||s.person?.fullName||'Unknown',
+          pos:isSP?'SP':'RP',
+          era:fp(st.era),
+          whip:fp(st.whip),
+          k9:fp(st.strikeoutsPer9Inn),
+          bb9:fp(st.walksPer9Inn),
+          fip:Math.max(0,parseFloat(fipRaw.toFixed(2))),
+          w:st.wins||0,
+          sv:st.saves||0,
+        };
+      })
+      .sort((a,b)=>{if(a.pos!==b.pos)return a.pos==='SP'?-1:1;return a.era-b.era;})
+      .slice(0,12);
+    if(pitchers.length>0){d.pitchers=pitchers;}
+    else{HEALTH.fix('Pitching API returned 0 qualifying pitchers (5+ IP) — keeping SEED roster');}
+  }
+  return d;
+}
+
 async function refreshAll(){
   const pill=document.getElementById('refresh-pill');
   const lbl=document.getElementById('refresh-label');
   if(pill) pill.classList.remove('live');
   if(lbl) lbl.textContent='Updating…';
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,
+  // fetch live MLB data and AI insight in parallel
+  const [liveResult]=await Promise.allSettled([
+    fetchLiveData(),
+    fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-5-20251001',max_tokens:200,
         system:'You are a sharp MLB analyst. 2 punchy sentences. No markdown.',
-        messages:[{role:'user',content:`Braves 2026: 39-19, 1st NL East. Sale ERA 3.01, Acuña .289/12HR/18SB. Last game: ATL 8 CIN 3 (Fuentes W). Next: vs CIN tonight 7:15. Hot take.`}]})});
-    const d=await res.json();
-    aiInsightCache=d.content?.map(c=>c.text||'').join('')||aiInsightCache;
-  }catch(e){}
-  DATA=SEED;
+        messages:[{role:'user',content:`Braves 2026: ${DATA?.record?.w||40}-${DATA?.record?.l||19}, 1st NL East. Sale ERA 2.01, Acuña .249/7HR/12SB. Last game: ${DATA?.lastGame?.recentResults?.slice(-1)[0]?.score||'recent W'}. Hot take.`}]})})
+      .then(r=>r.json()).then(r=>{aiInsightCache=r.content?.map(c=>c.text||'').join('')||aiInsightCache;})
+      .catch(()=>{})
+  ]);
+  if(liveResult.status==='fulfilled'){
+    DATA=mergeLiveData(SEED,liveResult.value);
+    HEALTH.ok(`Live sync — ${DATA.record.w}-${DATA.record.l} · ${DATA.batters.length} batters · ${DATA.pitchers.length} pitchers`,DATA.batters.length);
+  }else{
+    DATA=SEED;
+    HEALTH.fix(`Live fetch failed (${liveResult.reason?.message||'unknown'}) — using SEED fallback`);
+  }
+  // update header record live
+  const rec=document.getElementById('hdr-rec');
+  const sub=document.getElementById('hdr-rec-sub');
+  if(rec) rec.textContent=`${DATA.record.w}-${DATA.record.l}`;
+  if(sub) sub.textContent=`1ST · NL EAST · ${DATA.record.pct}`;
   const upEl=document.getElementById('last-updated');
   if(upEl) upEl.textContent=`Updated ${stamp()}`;
   if(pill) pill.classList.add('live');
@@ -363,18 +652,19 @@ function showTab(tab,btn){
   currentTab=tab;
   const c=document.getElementById('content');
   c.scrollTop=0;
-  stopAllGames();
+  cbStopBlink();
   renderTab(tab);
 }
 
 function renderTab(tab){
   const d=DATA||SEED;
-  if(tab==='overview')      renderOverview(d);
-  else if(tab==='stats')    renderStats(d);
-  else if(tab==='series')   renderSeries(d);
-  else if(tab==='standings')renderStandings(d);
-  else if(tab==='highlights')renderHighlights(d);
-  else if(tab==='games')    renderGames();
+  const fns={
+    overview:()=>renderOverview(d),
+    stats:()=>renderStats(d),
+    standings:()=>renderStandings(d),
+    highlights:()=>renderHighlights(d),
+  };
+  if(fns[tab]) HEALTH.safeRender(tab,fns[tab]);
 }
 
 // ── OVERVIEW ──
@@ -533,184 +823,514 @@ function renderHighlights(d){
 }
 
 // ════════════════════════════════════════
-// GAMES TAB
+// CHOP BOT TAB
 // ════════════════════════════════════════
-let activeGame='shuffle';
-function stopAllGames(){
-  if(window._shuffleTimer){clearTimeout(window._shuffleTimer);window._shuffleTimer=null}
-  if(window._baseTimer){clearInterval(window._baseTimer);window._baseTimer=null}
+let cbMsgs=[], cbApiHist=[], cbBusy=false, cbBlinkT=null;
+
+function cbStopBlink(){if(cbBlinkT){clearTimeout(cbBlinkT);cbBlinkT=null}}
+
+function cbBlink(){
+  const b=document.getElementById('cb-bot');
+  if(!b){cbBlinkT=null;return}
+  b.classList.add('blink');
+  setTimeout(()=>b.classList.remove('blink'),140);
+  cbBlinkT=setTimeout(cbBlink,2200+Math.random()*2600);
 }
 
-function renderGames(){
-  document.getElementById('content').innerHTML=`
-    <div class="game-selector">
-      <button class="gsb ${activeGame==='shuffle'?'active':''}" onclick="switchGame('shuffle')">🌀 Cap Shuffle</button>
-      <button class="gsb ${activeGame==='base'?'active':''}" onclick="switchGame('base')">🏃 Baserunning</button>
-    </div>
-    <div id="game-content"></div>`;
-  if(activeGame==='shuffle') initShuffle();
-  else initBase();
+function cbState(s){
+  const b=document.getElementById('cb-bot'),st=document.getElementById('cb-stxt');
+  if(!b)return;
+  b.classList.remove('thinking','talking','happy');
+  if(s==='thinking'){b.classList.add('thinking');if(st)st.textContent='Thinking…'}
+  else if(s==='talking'){b.classList.add('talking');if(st)st.textContent='Responding…'}
+  else if(s==='happy'){
+    b.classList.add('happy');
+    if(st)st.textContent='Let\'s go Braves! 🪓';
+    setTimeout(()=>{b.classList.remove('happy');if(st)st.textContent='Ready to Chop'},1200);
+  }else{if(st)st.textContent='Ready to Chop'}
 }
 
-function switchGame(g){
-  activeGame=g;
-  stopAllGames();
-  document.querySelectorAll('.gsb').forEach(b=>b.classList.remove('active'));
-  const btn=document.querySelector(`.gsb:${g==='shuffle'?'first':'last'}-child`);
-  if(btn) btn.classList.add('active');
-  if(g==='shuffle') initShuffle();
-  else initBase();
-}
+function cbEsc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
-// ── CAP SHUFFLE ──
-const CAP_SVG=()=>`<svg viewBox="0 0 80 55" xmlns="http://www.w3.org/2000/svg"><ellipse cx="40" cy="50" rx="38" ry="7" fill="rgba(0,0,0,.3)"/><path d="M8 38 Q10 15 40 14 Q70 15 72 38 Q60 42 40 43 Q20 42 8 38Z" fill="#002B5C"/><path d="M8 38 Q30 35 72 38 L72 42 Q50 46 40 46 Q20 46 8 42Z" fill="#CE1141"/><rect x="28" y="14" width="24" height="14" rx="3" fill="#002B5C"/><text x="40" y="25" font-size="9" text-anchor="middle" fill="white" font-family="Arial Black" font-weight="900">A</text><rect x="2" y="36" width="20" height="5" rx="2.5" fill="#8B6914"/></svg>`;
-let SS={ballPos:0,round:0,score:0,best:0,speed:700,shuffling:false,revealed:false,locked:false};
+function cbScrollEnd(){const el=document.getElementById('cb-msgs');if(el)el.scrollTop=el.scrollHeight}
 
-function initShuffle(){
-  SS={ballPos:Math.floor(Math.random()*3),round:0,score:0,best:parseInt(localStorage.getItem('sBest')||'0'),speed:700,shuffling:false,revealed:false,locked:false};
-  document.getElementById('game-content').innerHTML=`
-    <div class="game-panel" id="sh-panel">
-      <div class="game-title">🌀 CAP SHUFFLE</div>
-      <div class="game-sub">Watch the ball — find it after the shuffle! Gets faster every round.</div>
-      <div class="score-row">
-        <div class="score-box"><div class="sl">ROUND</div><div class="sv" id="sh-round" style="color:var(--yellow)">0</div></div>
-        <div class="score-box"><div class="sl">SCORE</div><div class="sv" id="sh-score" style="color:var(--green)">0</div></div>
-        <div class="score-box"><div class="sl">BEST</div><div class="sv" id="sh-best" style="color:var(--blue)">${SS.best}</div></div>
-      </div>
-      <div class="speed-bar">${[1,2,3,4,5,6,7,8].map(i=>`<div class="speed-seg" id="spd-${i}"></div>`).join('')}</div>
-      <div class="shuffle-msg" id="sh-msg">Tap START — watch the ball!</div>
-      <div class="caps-arena" id="caps-arena">
-        ${[0,1,2].map(i=>`<div class="cap" id="cap-${i}" onclick="capTapped(${i})" style="left:${i*33+1}%;width:30%">${CAP_SVG()}<div class="ball-peek">⚾</div><div class="cap-lbl">CAP ${i+1}</div></div>`).join('')}
-      </div>
-      <div class="result-flash" id="sh-flash"></div>
-      <button class="game-btn primary" id="sh-btn" onclick="startShuffle()">▶ START</button>
-    </div>`;
-  peekBall(true);
-}
-
-function peekBall(show){[0,1,2].forEach(i=>{const c=document.getElementById('cap-'+i);if(c) show&&i===SS.ballPos?c.classList.add('reveal'):c.classList.remove('reveal')})}
-function updateSpeedBar(){const lv=Math.min(8,Math.floor(SS.round/2)+1);for(let i=1;i<=8;i++){const s=document.getElementById('spd-'+i);if(!s)continue;if(i<=lv){s.classList.add('lit');s.classList.toggle('fast',lv>=4);s.classList.toggle('danger',lv>=6)}else s.classList.remove('lit','fast','danger')}}
-
-function startShuffle(){
-  if(SS.shuffling) return;
-  SS.round++;SS.speed=Math.max(160,700-SS.round*58);SS.shuffling=true;SS.revealed=false;SS.locked=false;
-  SS.ballPos=Math.floor(Math.random()*3);
-  document.getElementById('sh-round').textContent=SS.round;
-  document.getElementById('sh-msg').textContent='Watch the ball…';
-  document.getElementById('sh-btn').disabled=true;
-  updateSpeedBar();peekBall(true);
-  window._shuffleTimer=setTimeout(()=>{peekBall(false);doShuffles(0,7+SS.round*2);},950);
-}
-
-function doShuffles(done,total){
-  if(done>=total){SS.shuffling=false;const m=document.getElementById('sh-msg');if(m) m.textContent='🤔 Which cap hides the ball?';return}
-  const a=Math.floor(Math.random()*3);let b=a;while(b===a)b=Math.floor(Math.random()*3);
-  const cA=document.getElementById('cap-'+a),cB=document.getElementById('cap-'+b);
-  if(cA&&cB){const lA=cA.style.left;cA.style.left=cB.style.left;cB.style.left=lA;}
-  if(SS.ballPos===a)SS.ballPos=b;else if(SS.ballPos===b)SS.ballPos=a;
-  window._shuffleTimer=setTimeout(()=>doShuffles(done+1,total),SS.speed);
-}
-
-function capTapped(idx){
-  if(SS.shuffling||SS.revealed||SS.locked)return;
-  SS.revealed=true;SS.locked=true;peekBall(true);
-  const flash=document.getElementById('sh-flash'),msg=document.getElementById('sh-msg'),btn=document.getElementById('sh-btn'),panel=document.getElementById('sh-panel');
-  if(idx===SS.ballPos){
-    SS.score++;if(SS.score>SS.best){SS.best=SS.score;localStorage.setItem('sBest',SS.best);}
-    document.getElementById('sh-score').textContent=SS.score;document.getElementById('sh-best').textContent=SS.best;
-    if(flash){flash.textContent='✅ GOT IT!';flash.style.color='var(--green)';flash.classList.add('show');}
-    if(msg) msg.textContent=`Round ${SS.round} — correct! 🪓`;
-    window._shuffleTimer=setTimeout(()=>{if(flash)flash.classList.remove('show');if(btn){btn.disabled=false;btn.textContent='▶ NEXT ROUND';}},900);
+function cbAddBubble(from,text,isTyping=false){
+  const el=document.getElementById('cb-msgs');if(!el)return;
+  document.querySelectorAll('.cb-typing').forEach(n=>n.remove());
+  const d=document.createElement('div');
+  d.className='cmsg '+(from==='user'?'user':'bot')+(isTyping?' cb-typing':'');
+  if(from==='user'){
+    d.innerHTML=`<div class="cbubble">${cbEsc(text)}</div>`;
+  }else if(isTyping){
+    d.innerHTML=`<div class="cavy">🪓</div><div class="cbubble"><div class="ctyping"><span></span><span></span><span></span></div></div>`;
   }else{
-    if(flash){flash.textContent='❌ WRONG!';flash.style.color='var(--crimson)';flash.classList.add('show');}
-    if(panel){panel.classList.add('shakeg');setTimeout(()=>panel.classList.remove('shakeg'),400);}
-    if(msg) msg.textContent=`Ball was under Cap ${SS.ballPos+1}. Score: ${SS.score}`;
-    window._shuffleTimer=setTimeout(()=>{if(flash)flash.classList.remove('show');initShuffle();},1600);
+    d.innerHTML=`<div class="cavy">🪓</div><div class="cbubble">${text}</div>`;
   }
+  el.appendChild(d);cbScrollEnd();
 }
 
-// ── BASERUNNING DASH ──
-const BP=[{name:'Home',x:50,y:86},{name:'1B',x:81,y:55},{name:'2B',x:50,y:24},{name:'3B',x:19,y:55}];
-let BS={runnerBase:0,outs:0,score:0,sliding:false,gameOver:false,best:0,fielder:{x:75,y:35}};
+async function cbSend(override){
+  if(cbBusy)return;
+  const inp=document.getElementById('cb-inp');
+  const txt=(override||inp?.value||'').trim();
+  if(!txt)return;
+  if(inp)inp.value='';
+  const btn=document.getElementById('cb-send');
 
-function initBase(){
-  BS={runnerBase:0,outs:0,score:0,sliding:false,gameOver:false,best:parseInt(localStorage.getItem('bBest')||'0'),fielder:{x:75,y:35}};
-  document.getElementById('game-content').innerHTML=`
-    <div class="game-panel">
-      <div class="game-title">🏃 BASERUNNING DASH</div>
-      <div class="game-sub">RUN to advance bases · SLIDE to avoid the tag · HOLD to stay safe · Score by reaching HOME!</div>
-      <div class="score-row">
-        <div class="score-box"><div class="sl">RUNS</div><div class="sv" id="b-score" style="color:var(--green)">0</div></div>
-        <div class="score-box"><div class="sl">OUTS</div><div class="sv" id="b-outs" style="color:var(--crimson)">0</div></div>
-        <div class="score-box"><div class="sl">BEST</div><div class="sv" id="b-best" style="color:var(--blue)">${BS.best}</div></div>
-      </div>
-      <div class="out-indicator">${[0,1,2].map(i=>`<div class="out-dot" id="od-${i}"></div>`).join('')}<span style="font-size:10px;color:var(--dim);margin-left:4px">3 outs = inning over</span></div>
-      <div id="base-field">
-        <div style="position:absolute;width:52%;aspect-ratio:1;top:50%;left:50%;transform:translate(-50%,-55%) rotate(45deg)">
-          ${[{l:'43%',t:'86%',n:'H'},{l:'86%',t:'43%',n:'1'},{l:'43%',t:'0%',n:'2'},{l:'0%',t:'43%',n:'3'}].map((b,i)=>`<div class="base" id="base-${i}" style="left:${b.l};top:${b.t}">${b.n}</div>`).join('')}
-        </div>
-        <div id="runner" style="left:${BP[0].x-3.5}%;top:${BP[0].y-4}%">🏃</div>
-        <div id="fielder" style="left:${BS.fielder.x-3}%;top:${BS.fielder.y-3}%">🧤</div>
-      </div>
-      <div class="base-event" id="b-evt">Ball in play — make your move!</div>
-      <div class="base-actions">
-        <button class="base-btn run"   onclick="baseAct('run')">🏃 RUN</button>
-        <button class="base-btn slide" onclick="baseAct('slide')">💨 SLIDE</button>
-        <button class="base-btn stop"  onclick="baseAct('stop')">✋ HOLD</button>
-        <button class="base-btn home"  onclick="baseAct('home')">🏠 SCORE!</button>
+  cbAddBubble('user',txt);
+  cbMsgs.push({from:'user',text:txt});
+  cbApiHist.push({role:'user',content:txt});
+  cbBusy=true;
+  if(btn)btn.disabled=true;
+  cbState('thinking');
+  cbAddBubble('bot','',true);
+
+  try{
+    const res=await fetch('/api/chat',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:cbApiHist})});
+    const data=await res.json();
+    const reply=data.text||'Sorry, had trouble with that one — try again! 🪓';
+    cbApiHist.push({role:'assistant',content:reply});
+    cbMsgs.push({from:'bot',text:reply});
+    cbState('talking');
+    cbAddBubble('bot',reply);
+    setTimeout(()=>cbState('happy'),400);
+  }catch(e){
+    cbMsgs.push({from:'bot',text:'Couldn\'t connect right now. Check your signal and try again! ⚾'});
+    cbState('idle');
+    cbAddBubble('bot','Couldn\'t connect right now. Check your signal and try again! ⚾');
+  }
+
+  cbBusy=false;
+  if(btn)btn.disabled=false;
+  if(inp&&!override)inp.focus();
+}
+
+function cbSugg(s){cbSend(s)}
+
+function cbBotSvg(){
+  return`<svg id="cb-bot" viewBox="0 0 180 258" xmlns="http://www.w3.org/2000/svg" width="162" height="232">
+  <!-- ground shadow -->
+  <ellipse cx="90" cy="253" rx="52" ry="7" fill="rgba(0,0,0,.2)"/>
+
+  <!-- PANTS & CLEATS -->
+  <rect x="52" y="212" width="30" height="38" rx="12" fill="#002B5C"/>
+  <rect x="98" y="212" width="30" height="38" rx="12" fill="#002B5C"/>
+  <rect x="44" y="210" width="92" height="7" rx="3.5" fill="#1a0a00"/>
+  <rect x="82" y="208" width="16" height="11" rx="3" fill="#c8a428"/>
+  <ellipse cx="67" cy="251" rx="20" ry="5.5" fill="#111"/>
+  <ellipse cx="113" cy="251" rx="20" ry="5.5" fill="#111"/>
+
+  <!-- JERSEY BODY -->
+  <rect x="36" y="148" width="108" height="68" rx="20" fill="white" stroke="#e0e0e0" stroke-width="1"/>
+  <line x1="64" y1="148" x2="64" y2="216" stroke="#002B5C" stroke-width="1.5" opacity=".17"/>
+  <line x1="90" y1="148" x2="90" y2="216" stroke="#002B5C" stroke-width="1.5" opacity=".17"/>
+  <line x1="116" y1="148" x2="116" y2="216" stroke="#002B5C" stroke-width="1.5" opacity=".17"/>
+  <path d="M74 148 Q90 164 106 148" fill="none" stroke="#CE1141" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="90" y="185" font-size="13" text-anchor="middle" fill="#002B5C" font-family="Arial Black,sans-serif" font-weight="900" letter-spacing="3">ATL</text>
+  <text x="90" y="206" font-size="19" text-anchor="middle" fill="#CE1141" font-family="Anton,sans-serif">44</text>
+
+  <!-- LEFT ARM -->
+  <rect x="20" y="152" width="22" height="28" rx="10" fill="#002B5C"/>
+  <rect x="22" y="172" width="18" height="34" rx="8" fill="#f2a870"/>
+  <ellipse cx="31" cy="210" rx="13" ry="10" fill="#f2a870"/>
+
+  <!-- RIGHT ARM -->
+  <rect x="138" y="152" width="22" height="28" rx="10" fill="#002B5C"/>
+  <rect x="140" y="172" width="18" height="34" rx="8" fill="#f2a870"/>
+  <ellipse cx="149" cy="210" rx="13" ry="10" fill="#f2a870"/>
+
+  <!-- NECK -->
+  <rect x="78" y="134" width="24" height="18" rx="9" fill="#f2a870"/>
+
+  <!-- FACE -->
+  <g id="cb-head">
+    <!-- ears with inner detail -->
+    <ellipse cx="36" cy="98" rx="11" ry="14" fill="#f2a870"/>
+    <ellipse cx="36" cy="98" rx="6" ry="9" fill="#e08050" opacity=".38"/>
+    <ellipse cx="144" cy="98" rx="11" ry="14" fill="#f2a870"/>
+    <ellipse cx="144" cy="98" rx="6" ry="9" fill="#e08050" opacity=".38"/>
+
+    <!-- head — large, Disney-proportioned -->
+    <ellipse cx="90" cy="96" rx="52" ry="54" fill="#f2a870"/>
+    <!-- jaw softening -->
+    <ellipse cx="90" cy="136" rx="38" ry="19" fill="#f2a870"/>
+    <!-- very subtle temple shadow for depth -->
+    <ellipse cx="46" cy="88" rx="14" ry="20" fill="#e08050" opacity=".08"/>
+    <ellipse cx="134" cy="88" rx="14" ry="20" fill="#e08050" opacity=".08"/>
+
+    <!-- EYEBROWS — thick, arched, expressive -->
+    <path id="cb-brow-l" d="M52 69 Q67 60 82 66" fill="none" stroke="#4a2810" stroke-width="5" stroke-linecap="round"/>
+    <path id="cb-brow-r" d="M98 66 Q113 60 128 69" fill="none" stroke="#4a2810" stroke-width="5" stroke-linecap="round"/>
+
+    <!-- LEFT EYE -->
+    <!-- sclera -->
+    <ellipse cx="70" cy="86" rx="18" ry="16" fill="white"/>
+    <!-- iris outer ring -->
+    <circle cx="70" cy="87" r="12" fill="#8a5828"/>
+    <!-- iris mid -->
+    <circle cx="70" cy="87" r="8.5" fill="#b07038" opacity=".8"/>
+    <!-- pupil -->
+    <circle class="cb-pupil" cx="70" cy="87" r="6.5" fill="#160802"/>
+    <!-- main sparkle — large, upper-right -->
+    <circle cx="77" cy="79" r="5" fill="white"/>
+    <!-- secondary sparkle — small, lower-left -->
+    <circle cx="62" cy="92" r="2.2" fill="white" opacity=".55"/>
+    <!-- upper eyelid line — thick, defines the eye shape -->
+    <path d="M52 80 Q70 70 88 80" fill="none" stroke="#261006" stroke-width="3.5" stroke-linecap="round"/>
+    <!-- lower lid line — subtle -->
+    <path d="M54 94 Q70 100 86 94" fill="none" stroke="#a06040" stroke-width="1.2" stroke-linecap="round" opacity=".45"/>
+    <!-- blink lid (skin-colored, scales over eye) -->
+    <ellipse cx="70" cy="86" rx="18" ry="16" fill="#f2a870" class="cb-lid" style="transform-box:fill-box;transform-origin:center"/>
+
+    <!-- RIGHT EYE -->
+    <ellipse cx="110" cy="86" rx="18" ry="16" fill="white"/>
+    <circle cx="110" cy="87" r="12" fill="#8a5828"/>
+    <circle cx="110" cy="87" r="8.5" fill="#b07038" opacity=".8"/>
+    <circle class="cb-pupil" cx="110" cy="87" r="6.5" fill="#160802"/>
+    <circle cx="117" cy="79" r="5" fill="white"/>
+    <circle cx="102" cy="92" r="2.2" fill="white" opacity=".55"/>
+    <path d="M92 80 Q110 70 128 80" fill="none" stroke="#261006" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M94 94 Q110 100 126 94" fill="none" stroke="#a06040" stroke-width="1.2" stroke-linecap="round" opacity=".45"/>
+    <ellipse cx="110" cy="86" rx="18" ry="16" fill="#f2a870" class="cb-lid" style="transform-box:fill-box;transform-origin:center"/>
+
+    <!-- NOSE — small, Disney-style suggestion -->
+    <ellipse cx="90" cy="110" rx="9" ry="6.5" fill="#e08050" opacity=".3"/>
+    <path d="M83 112 Q87 117 90 115 Q93 117 97 112" fill="none" stroke="#b86840" stroke-width="2.2" stroke-linecap="round"/>
+
+    <!-- MOUTH — wide warm smile -->
+    <path id="cb-mouth" d="M70 122 Q90 138 110 122" fill="none" stroke="#9a4020" stroke-width="4" stroke-linecap="round"/>
+    <!-- teeth (visible on happy state) -->
+    <path id="cb-teeth" d="M75 125 Q90 134 105 125 L105 130 Q90 139 75 130Z" fill="white" opacity="0"/>
+    <!-- lower lip crease — very subtle -->
+    <path d="M80 133 Q90 138 100 133" fill="none" stroke="#c07858" stroke-width="1.5" stroke-linecap="round" opacity=".35"/>
+
+    <!-- cheek blush — classic Disney touch -->
+    <ellipse cx="46" cy="112" rx="15" ry="10" fill="#e86050" opacity=".18"/>
+    <ellipse cx="134" cy="112" rx="15" ry="10" fill="#e86050" opacity=".18"/>
+
+    <!-- dark hair peeking at hat brim sides -->
+    <path d="M40 65 Q50 56 60 61" fill="none" stroke="#3a2008" stroke-width="6" stroke-linecap="round"/>
+    <path d="M120 61 Q130 56 140 65" fill="none" stroke="#3a2008" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <!-- HAT — drawn last so it sits cleanly over the face -->
+  <g id="cb-hat">
+    <!-- dome (Braves navy) -->
+    <path d="M34 64 Q34 8 90 8 Q146 8 146 64Z" fill="#002B5C"/>
+    <!-- dome gloss highlight -->
+    <ellipse cx="80" cy="26" rx="28" ry="15" fill="#003a8a" opacity=".36"/>
+    <!-- top button -->
+    <circle cx="90" cy="9" r="5.5" fill="#CE1141"/>
+    <!-- sweatband stripe at dome base -->
+    <path d="M34 64 Q90 71 146 64 L146 70 Q90 77 34 70Z" fill="#CE1141"/>
+    <!-- "A" logo — bold white on navy -->
+    <text x="90" y="58" font-size="34" text-anchor="middle" fill="white" font-family="Arial Black,sans-serif" font-weight="900">A</text>
+    <!-- red bill — the signature Braves look -->
+    <path d="M16 67 Q90 62 164 67 Q170 76 150 83 Q90 88 30 83 Q10 76 16 67Z" fill="#CE1141"/>
+    <!-- bill underside shadow for depth -->
+    <path d="M30 74 Q90 79 150 74 L150 83 Q90 88 30 83Z" fill="#8a0c22" opacity=".52"/>
+    <!-- bill top highlight -->
+    <path d="M20 67 Q90 63 160 67" fill="none" stroke="#ff4060" stroke-width="1.5" opacity=".2" stroke-linecap="round"/>
+  </g>
+</svg>`;
+}
+
+const CB_SUGG=[
+  "Who's the best Brave ever? 🪓","How's Chris Sale looking?",
+  "Keys to beating the Reds?","What's OPS and why does it matter?",
+  "Best MLB park to visit?","Who leads ATL in strikeouts?",
+];
+
+function renderChopBot(){
+  cbStopBlink();
+  const greet=cbMsgs.length===0;
+  if(greet){
+    cbMsgs.push({from:'bot',text:'CHOP CHOP! I\'m <strong>The Chop Bot</strong> — your AI Braves analyst. Ask me anything about the Braves, MLB stats, history, or strategy. Let\'s talk baseball! ⚾🪓'});
+  }
+  const msgsHtml=cbMsgs.map(m=>
+    m.from==='user'
+      ?`<div class="cmsg user"><div class="cbubble">${cbEsc(m.text)}</div></div>`
+      :`<div class="cmsg bot"><div class="cavy">🪓</div><div class="cbubble">${m.text}</div></div>`
+  ).join('');
+  document.getElementById('content').innerHTML=`
+    <div class="cb-hero">
+      <div class="cb-glow"></div>
+      ${cbBotSvg()}
+      <div class="cb-name">THE CHOP BOT</div>
+      <div class="cb-status-bar"><span class="cb-sdot"></span><span id="cb-stxt">Ready to Chop</span></div>
+    </div>
+    <div class="chat-area">
+      <div class="chat-msgs" id="cb-msgs">${msgsHtml}</div>
+      <div class="csugg" style="padding:8px 12px 0;border-top:1px solid var(--border);overflow-x:auto;flex-wrap:nowrap">${CB_SUGG.map(s=>`<button class="csugg-btn" onclick="cbSugg(${JSON.stringify(s)})">${s}</button>`).join('')}</div>
+      <div class="chat-irow">
+        <textarea class="cinput" id="cb-inp" placeholder="Ask The Chop Bot anything…" rows="1"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();cbSend()}"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,88)+'px'"></textarea>
+        <button class="csend" id="cb-send" onclick="cbSend()">⚾</button>
       </div>
     </div>`;
-  updateBases();scheduleFielder();
+  cbScrollEnd();
+  setTimeout(()=>{cbBlink();cbState('idle');},700);
 }
 
-function updateBases(){BP.forEach((_,i)=>{const el=document.getElementById('base-'+i);if(el){el.className='base'+(i===BS.runnerBase?' safe':i===(BS.runnerBase+1)%4?' active':'');}})}
+// ════════════════════════════════════════
+// SCORE PREDICTOR
+// ════════════════════════════════════════
+let predAtl=3,predOpp=2;
 
-function scheduleFielder(){
-  if(window._baseTimer)clearInterval(window._baseTimer);
-  window._baseTimer=setInterval(()=>{
-    if(BS.gameOver)return;
-    const t=BP[BS.runnerBase];const dx=t.x-BS.fielder.x;const dy=t.y-BS.fielder.y;
-    const dist=Math.sqrt(dx*dx+dy*dy);const spd=1.6+BS.score*0.18;
-    if(dist>2){BS.fielder.x+=dx/dist*spd;BS.fielder.y+=dy/dist*spd;const f=document.getElementById('fielder');if(f){f.style.left=(BS.fielder.x-3)+'%';f.style.top=(BS.fielder.y-3)+'%';}if(dist<8&&!BS.sliding)recordOut('Tagged out at '+BP[BS.runnerBase].name+'! 🧤');}
-  },80);
-}
+function predGet(){try{return JSON.parse(localStorage.getItem('braves_preds')||'[]')}catch(e){return[]}}
+function predSave(p){localStorage.setItem('braves_preds',JSON.stringify(p))}
 
-function baseAct(act){
-  if(BS.gameOver)return;
-  const next=(BS.runnerBase+1)%4;const evt=document.getElementById('b-evt');
-  if(act==='run'||act==='home'){
-    const dest=act==='home'?0:next;BS.runnerBase=dest;BS.sliding=false;
-    BS.fielder={x:72+Math.random()*18,y:18+Math.random()*22};
-    const r=document.getElementById('runner');if(r){r.style.left=(BP[dest].x-3.5)+'%';r.style.top=(BP[dest].y-4)+'%';}
-    const f=document.getElementById('fielder');if(f){f.style.left=BS.fielder.x+'%';f.style.top=BS.fielder.y+'%';}
-    if(dest===0&&act==='home'){BS.score++;if(BS.score>BS.best){BS.best=BS.score;localStorage.setItem('bBest',BS.best);}document.getElementById('b-score').textContent=BS.score;document.getElementById('b-best').textContent=BS.best;if(evt)evt.textContent='🏠 RUN SCORES! +1';}
-    else{if(evt)evt.textContent=`Safe at ${BP[dest].name}!`;}
-    updateBases();
-  }else if(act==='slide'){BS.sliding=true;if(evt)evt.textContent='💨 Sliding — no tag for 2 seconds!';setTimeout(()=>{BS.sliding=false;},2000);}
-  else if(act==='stop'){BS.fielder={x:72+Math.random()*18,y:18+Math.random()*22};if(evt)evt.textContent=`Holding at ${BP[BS.runnerBase].name} — safe!`;}
-}
-
-function recordOut(msg){
-  BS.outs++;const od=document.getElementById('od-'+(BS.outs-1));if(od)od.classList.add('lit');
-  document.getElementById('b-outs').textContent=BS.outs;
-  const evt=document.getElementById('b-evt');if(evt)evt.textContent=msg;
-  BS.fielder={x:72+Math.random()*18,y:18+Math.random()*22};BS.runnerBase=0;BS.sliding=false;
-  const r=document.getElementById('runner');if(r){r.style.left=(BP[0].x-3.5)+'%';r.style.top=(BP[0].y-4)+'%';}
-  updateBases();
-  if(BS.outs>=3){
-    BS.gameOver=true;clearInterval(window._baseTimer);
-    setTimeout(()=>{
-      const gc=document.getElementById('game-content');
-      if(gc)gc.innerHTML+=`<div class="card" style="margin-top:8px;text-align:center;border-color:#22c55e44">
-        <div style="font-family:'Anton',sans-serif;font-size:24px;color:var(--green);margin-bottom:6px">INNING OVER</div>
-        <div style="font-size:14px;color:var(--muted);margin-bottom:14px">You scored <strong style="color:var(--green)">${BS.score} run${BS.score!==1?'s':''}</strong> this inning · Best: ${BS.best}</div>
-        <button class="game-btn primary" onclick="switchGame('base')">▶ PLAY AGAIN</button>
-      </div>`;
-    },800);
+function predSettle(){
+  const preds=predGet();
+  const d=DATA||SEED;
+  // Primary: use completedGames (10 games, has ISO date for exact matching)
+  // Fallback: use lastGame.recentResults
+  const completed=d.completedGames||[];
+  const recent=d.lastGame.recentResults||[];
+  let changed=false;
+  for(const p of preds){
+    if(p.settled)continue;
+    let match=null;
+    // Try ISO date match first (most reliable)
+    if(p.isoDate&&completed.length){
+      match=completed.find(g=>g.isoDate===p.isoDate&&g.opp===p.opp);
+    }
+    // Fall back to day-number + opponent match
+    if(!match){
+      const predDay=String(p.date.match(/\d+$/)?.[0]||'');
+      // Check completedGames (has ISO date: extract day from "2026-05-31")
+      match=completed.find(g=>{
+        const day=String(parseInt(g.isoDate?.split('-')[2]||'0'));
+        return g.opp===p.opp&&day===predDay;
+      });
+      // Last resort: check recentResults display dates
+      if(!match) match=recent.find(r=>r.opp===p.opp&&String(r.date.split(' ')[1])===predDay);
+    }
+    if(match){
+      const[atlA,oppA]=match.score.split('-').map(Number);
+      p.atlActual=atlA;p.oppActual=oppA;p.settled=true;
+      const ad=Math.abs(p.atlPick-atlA),od=Math.abs(p.oppPick-oppA);
+      const atlWon=atlA>oppA,pickWon=p.atlPick>p.oppPick;
+      if(ad===0&&od===0)p.result='exact';
+      else if(ad<=1&&od<=1)p.result='close';
+      else if(atlWon===pickWon)p.result='winner';
+      else p.result='miss';
+      changed=true;
+      HEALTH.fix(`Score predictor: settled ATL vs ${p.opp} on ${p.isoDate||p.date} — result: ${p.result}`);
+    }
   }
+  if(changed)predSave(preds);
+  return preds;
 }
+
+function predAdjust(team,delta){
+  if(team==='atl')predAtl=Math.max(0,Math.min(20,predAtl+delta));
+  else predOpp=Math.max(0,Math.min(20,predOpp+delta));
+  const as=document.getElementById('pred-atl-s');
+  const os=document.getElementById('pred-opp-s');
+  if(as)as.textContent=predAtl;
+  if(os)os.textContent=predOpp;
+}
+
+function predLock(){
+  const d=DATA||SEED;
+  if(!d.nextGames[0])return;
+  const ng=d.nextGames[0];
+  const key=ng.opp+'-'+ng.date;
+  const preds=predGet();
+  if(preds.find(p=>p.key===key))return;
+  preds.unshift({key,opp:ng.opp,date:ng.date,isoDate:ng.isoDate||null,time:ng.time,
+    atlPick:predAtl,oppPick:predOpp,settled:false,result:null,atlActual:null,oppActual:null});
+  predSave(preds);
+  renderPredictor();
+}
+
+function predBadge(result){
+  const m={exact:['exact','🎯 Exact'],close:['close','🔥 Close'],winner:['winner','✅ Winner'],miss:['miss','❌ Miss'],pending:['pending','⏳ Pending']};
+  const[cls,label]=m[result]||m.pending;
+  return`<span class="pred-badge ${cls}">${label}</span>`;
+}
+
+function renderPredictor(){
+  const d=DATA||SEED;
+  const ng=d.nextGames[0];
+  const preds=predSettle();
+  const key=ng?ng.opp+'-'+ng.date:null;
+  const locked=key?preds.find(p=>p.key===key):null;
+  const settled=preds.filter(p=>p.settled);
+  const exact=settled.filter(p=>p.result==='exact').length;
+  const close=settled.filter(p=>p.result==='close').length;
+  const win=settled.filter(p=>p.result==='winner').length;
+
+  document.getElementById('content').innerHTML=`
+    <div class="pred-card">
+      <div class="ct" style="color:var(--green)">🎯 SCORE PREDICTOR</div>
+      ${ng?`
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-family:'Anton',sans-serif;font-size:26px">ATL <span style="color:var(--dim);font-size:18px">vs</span> ${ng.opp}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">${ng.date} · ${ng.time}</div>
+          <div style="font-size:11px;color:var(--dim)">${ng.loc}</div>
+        </div>
+        ${locked?`
+          <div class="pred-locked">🔒 Locked in: <strong>ATL ${locked.atlPick} – ${ng.opp} ${locked.oppPick}</strong></div>
+          ${locked.settled
+            ?`<div style="text-align:center;margin-top:10px;font-size:14px">Final: ATL ${locked.atlActual} – ${ng.opp} ${locked.oppActual} &nbsp; ${predBadge(locked.result)}</div>`
+            :`<div style="text-align:center;margin-top:8px;font-size:12px;color:var(--dim)">Check back after the game ⚾</div>`}
+        `:`
+          <div class="pred-pickers">
+            <div class="pred-team">
+              <div class="pred-team-lbl">ATL</div>
+              <button class="pred-adj" onclick="predAdjust('atl',1)">▲</button>
+              <div class="pred-num" id="pred-atl-s">${predAtl}</div>
+              <button class="pred-adj" onclick="predAdjust('atl',-1)">▼</button>
+            </div>
+            <div style="font-family:'Anton',sans-serif;font-size:22px;color:var(--dim);padding-top:34px">VS</div>
+            <div class="pred-team">
+              <div class="pred-team-lbl">${ng.opp}</div>
+              <button class="pred-adj" onclick="predAdjust('opp',1)">▲</button>
+              <div class="pred-num" id="pred-opp-s">${predOpp}</div>
+              <button class="pred-adj" onclick="predAdjust('opp',-1)">▼</button>
+            </div>
+          </div>
+          <button class="pred-lock-btn" onclick="predLock()">🔒 LOCK IT IN</button>
+        `}
+      `:`<div style="text-align:center;color:var(--dim);padding:20px">No upcoming game scheduled</div>`}
+    </div>
+    ${settled.length>0?`
+    <div class="card">
+      <div class="ct" style="color:var(--muted)">📊 YOUR ACCURACY</div>
+      <div class="sg">
+        <div class="sb"><div class="sl">PICKS</div><div class="sv">${settled.length}</div></div>
+        <div class="sb"><div class="sl">GOT WINNER</div><div class="sv" style="color:var(--green)">${exact+close+win}</div></div>
+        <div class="sb"><div class="sl">EXACT 🎯</div><div class="sv" style="color:var(--yellow)">${exact}</div></div>
+      </div>
+    </div>`:''}
+    <div class="card">
+      <div class="ct" style="color:var(--muted)">🗒️ PAST PICKS</div>
+      ${preds.length===0
+        ?`<div style="text-align:center;color:var(--dim);padding:16px;font-size:13px">No picks yet — lock in your first prediction above!</div>`
+        :preds.map(p=>`
+          <div class="pred-row">
+            <div>
+              <div style="font-weight:700;font-size:14px">${p.date} · vs ${p.opp}</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px">My pick: ATL ${p.atlPick}–${p.opp} ${p.oppPick}</div>
+              ${p.settled?`<div style="font-size:12px;color:var(--dim)">Final: ATL ${p.atlActual}–${p.opp} ${p.oppActual}</div>`:''}
+            </div>
+            ${predBadge(p.settled?p.result:'pending')}
+          </div>`).join('')}
+    </div>`;
+}
+
+// ── HEALTH DASHBOARD UI ──
+function showHealth(){
+  if(document.getElementById('h-ov'))return;
+  const s=HEALTH.getSt();
+  const log=HEALTH.getLog();
+  const statusColor={green:'var(--green)',yellow:'var(--yellow)',red:'var(--crimson)'}[s.status]||'var(--green)';
+  const statusLabel={green:'All Systems Operational',yellow:'Some Issues Detected',red:'Errors Detected'}[s.status]||'OK';
+  const lastSyncAgo=s.lastSync?Math.round((Date.now()-s.lastSync)/1000)+'s ago':'Never';
+
+  const systems=[
+    {name:'Live Scores & Standings',dot:s.errs===0?'var(--green)':'var(--crimson)',status:s.errs===0?'Syncing normally':'Errors detected'},
+    {name:'Player Stats (Batting)',dot:s.lastSyncPlayers>0?'var(--green)':'var(--yellow)',status:s.lastSyncPlayers>0?`${s.lastSyncPlayers} players loaded`:'Using seed data'},
+    {name:'Score Predictor',dot:'var(--green)',status:'Storing picks locally'},
+    {name:'Auto-refresh Timer',dot:refreshTimer?'var(--green)':'var(--crimson)',status:refreshTimer?'Running every 2 min':'Stopped'},
+    {name:'Network',dot:'var(--green)',status:navigator.onLine?'Online':'Offline'},
+    {name:'Last Sync',dot:'var(--green)',status:lastSyncAgo},
+  ];
+
+  const logHtml=log.length===0
+    ?`<div class="h-empty">No events yet — all clear 🪓</div>`
+    :log.map(e=>`
+      <div class="h-ev">
+        <div class="h-ei">${e.icon}</div>
+        <div>
+          <div class="h-em" style="color:${e.type==='fix'?'var(--green)':e.type==='err'?'var(--crimson)':e.type==='warn'?'var(--yellow)':e.type==='ok'?'var(--green)':'var(--text)'}">${e.msg}</div>
+          <div class="h-et">${e.t}</div>
+        </div>
+      </div>`).join('');
+
+  const ov=document.createElement('div');
+  ov.id='h-ov';ov.className='h-ov';
+  ov.innerHTML=`
+    <div class="h-hdr">
+      <div>
+        <div class="h-ttl">SYSTEM HEALTH</div>
+        <div style="font-size:10px;color:${statusColor};margin-top:2px;letter-spacing:1px">${statusLabel}</div>
+      </div>
+      <button class="h-cls" onclick="closeHealth()">×</button>
+    </div>
+    <div class="h-body">
+      <div class="h-sg">
+        <div class="h-s"><div class="h-sv">${HEALTH.uptime()}</div><div class="h-sl">Uptime</div></div>
+        <div class="h-s"><div class="h-sv" style="color:var(--green)">${s.fixes}</div><div class="h-sl">Auto-Fixes</div></div>
+        <div class="h-s"><div class="h-sv" style="color:${s.errs>0?'var(--crimson)':'var(--green)'}">${s.errs}</div><div class="h-sl">Errors</div></div>
+        <div class="h-s"><div class="h-sv">${s.calls}</div><div class="h-sl">API Calls</div></div>
+        <div class="h-s"><div class="h-sv" style="color:var(--yellow)">${s.warns}</div><div class="h-sl">Warnings</div></div>
+        <div class="h-s"><div class="h-sv">${log.filter(e=>e.type==='ok').length}</div><div class="h-sl">Good Syncs</div></div>
+      </div>
+      <div class="card" style="margin-bottom:12px">
+        <div class="ct" style="color:var(--muted)">SYSTEMS</div>
+        ${systems.map(s=>`<div class="h-sys"><div class="h-sdot" style="background:${s.dot}"></div><div class="h-sn">${s.name}</div><div class="h-ss">${s.status}</div></div>`).join('')}
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="ct" style="color:var(--muted);margin-bottom:0">FIX LOG (${log.length})</div>
+          <button onclick="HEALTH.clearLog();closeHealth();showHealth()" style="font-size:11px;color:var(--dim);background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">Clear</button>
+        </div>
+        ${logHtml}
+      </div>
+    </div>`;
+  document.getElementById('app').appendChild(ov);
+}
+
+function closeHealth(){const o=document.getElementById('h-ov');if(o)o.remove();}
+
+// ── NETWORK MONITOR ──
+window.addEventListener('offline',()=>{
+  HEALTH.warn('Network went offline — pausing auto-refresh');
+  clearTimeout(refreshTimer);refreshTimer=null;
+  const lbl=document.getElementById('refresh-label');
+  if(lbl)lbl.textContent='Offline — waiting for connection';
+});
+window.addEventListener('online',()=>{
+  HEALTH.fix('Network restored — resuming live updates');
+  refreshAll();
+});
+
+// ── STALENESS WATCHDOG ── (runs every 60s, restarts refresh if timer silently died)
+setInterval(()=>{
+  if(!navigator.onLine)return;
+  const s=HEALTH.getSt();
+  if(!refreshTimer){
+    HEALTH.fix('Refresh timer was stopped — restarting auto-refresh');
+    refreshAll();return;
+  }
+  if(s.lastSync&&(Date.now()-s.lastSync)>5*60*1000){
+    HEALTH.fix('Data stale >5 min — forcing emergency refresh');
+    refreshAll();
+  }
+},60*1000);
+
+// ── LOCALSTORAGE INTEGRITY CHECK ──
+(()=>{
+  try{
+    const preds=localStorage.getItem('braves_preds');
+    if(preds){
+      const p=JSON.parse(preds);
+      if(!Array.isArray(p))throw new Error('not an array');
+    }
+  }catch(e){
+    localStorage.removeItem('braves_preds');
+    HEALTH.fix(`Score predictor data was corrupted — reset to clean state (${e.message})`);
+  }
+})();
 
 // ── BOOT ──
+HEALTH.info('Dashboard initialised — beginning first sync');
 DATA=SEED;
 refreshAll();
 </script>
