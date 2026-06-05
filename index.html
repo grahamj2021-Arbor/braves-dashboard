@@ -267,7 +267,7 @@
 <script>
 const MLB_BAT={avg:.248,obp:.318,slg:.413,ops:.731,hr:14,rbi:52,sb:8};
 const MLB_PIT={era:4.20,whip:1.28,k9:8.8,bb9:3.2,fip:4.15};
-let DATA=null, currentTab='overview', refreshTimer=null, aiInsightCache='';
+let DATA=null, currentTab='overview', refreshTimer=null, aiInsightCache='', lastRenderTime=0, aiInsightTimer=null;
 
 // ── HEALTH MONITOR ──
 const HEALTH=(()=>{
@@ -616,15 +616,26 @@ async function refreshAll(){
   if(pill) pill.classList.remove('live');
   if(lbl) lbl.textContent='Updating…';
   // fetch live MLB data and AI insight in parallel
+  clearTimeout(aiInsightTimer);
   const [liveResult]=await Promise.allSettled([
     fetchLiveData(),
-    fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5-20251001',max_tokens:200,
-        system:'You are a sharp MLB analyst. 2 punchy sentences. No markdown.',
-        messages:[{role:'user',content:`Braves 2026: ${DATA?.record?.w||40}-${DATA?.record?.l||19}, 1st NL East. Sale ERA 2.01, Acuña .249/7HR/12SB. Last game: ${DATA?.lastGame?.recentResults?.slice(-1)[0]?.score||'recent W'}. Hot take.`}]})})
-      .then(r=>r.json()).then(r=>{aiInsightCache=r.content?.map(c=>c.text||'').join('')||aiInsightCache;})
-      .catch(()=>{})
+    fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:[{role:'user',content:`Hot take: 2026 Braves are ${DATA?.record?.w||40}-${DATA?.record?.l||19}, 1st NL East. Sale ERA 2.01, Acuña .249. Last 3 results: ${(DATA?.lastGame?.recentResults||[]).slice(-3).map(r=>`${r.r} vs ${r.opp} ${r.score}`).join(', ')||'recent W'}. Give me two punchy analyst sentences. No markdown.`}]})})
+      .then(r=>r.json()).then(r=>{
+        if(r.text){aiInsightCache=r.text;const el=document.querySelector('.ait');if(el)el.textContent=r.text;}
+      })
+      .catch(e=>HEALTH.warn(`AI insight fetch failed: ${e.message}`))
   ]);
+  // fallback: if insight still loading after 12s, show static text
+  aiInsightTimer=setTimeout(()=>{
+    const el=document.querySelector('.ait');
+    if(el&&el.querySelector('.spin')){
+      const d=DATA||SEED;
+      const fb=`Braves sit ${d.record.w}-${d.record.l} atop the NL East — elite pitching and a red-hot lineup make them the class of the division. The Chop is very much alive in 2026.`;
+      el.textContent=fb; aiInsightCache=fb;
+      HEALTH.fix('AI insight timed out — showing static fallback');
+    }
+  },12000);
   if(liveResult.status==='fulfilled'){
     DATA=mergeLiveData(SEED,liveResult.value);
     HEALTH.ok(`Live sync — ${DATA.record.w}-${DATA.record.l} · ${DATA.batters.length} batters · ${DATA.pitchers.length} pitchers`,DATA.batters.length);
@@ -664,13 +675,16 @@ function renderTab(tab){
     standings:()=>renderStandings(d),
     highlights:()=>renderHighlights(d),
   };
-  if(fns[tab]) HEALTH.safeRender(tab,fns[tab]);
+  if(fns[tab]){lastRenderTime=Date.now();HEALTH.safeRender(tab,fns[tab]);}
 }
 
 // ── OVERVIEW ──
 function renderOverview(d){
-  const tb=d.batters.reduce((a,b)=>b.ops>a.ops?b:a);
-  const tp=d.pitchers.filter(p=>p.pos==='SP').reduce((a,b)=>b.era<a.era?b:a);
+  const tb=d.batters.length?d.batters.reduce((a,b)=>b.ops>a.ops?b:a):null;
+  const spList=d.pitchers.filter(p=>p.pos==='SP');
+  const tp=spList.length?spList.reduce((a,b)=>b.era<a.era?b:a):(d.pitchers.length?d.pitchers[0]:null);
+  if(!tb)HEALTH.warn('No batting data available for overview — batter card hidden');
+  if(!tp)HEALTH.warn('No pitching data available for overview — pitcher card hidden');
   document.getElementById('content').innerHTML=`
     <div class="aic">
       <div class="ail">⚡ AI ANALYST TAKE</div>
@@ -687,16 +701,17 @@ function renderOverview(d){
         <div class="sb"><div class="sl">RUN +/-</div><div class="sv" style="color:var(--green)">${d.record.runDiff}</div><div class="ss">Differential</div></div>
       </div>
     </div>
-    <div class="ph bat">
+    ${tb?`<div class="ph bat">
       <div class="ct" style="color:var(--green)">🏆 TOP BATTER</div>
       <div class="pn">${tb.name}</div><div class="pp">${tb.pos} · OPS Leader</div>
       <div class="ps">${[['AVG',tb.avg.toFixed(3),MLB_BAT.avg,false],['OPS',tb.ops.toFixed(3),MLB_BAT.ops,false],['HR',tb.hr,MLB_BAT.hr,false],['RBI',tb.rbi,MLB_BAT.rbi,false],['OBP',tb.obp.toFixed(3),MLB_BAT.obp,false],['SB',tb.sb,MLB_BAT.sb,false]].map(([l,v,a,low])=>`<div class="psi"><div class="psl">${l}</div><div class="psv" style="color:${sc(parseFloat(v),a,low)}">${v}</div></div>`).join('')}</div>
-    </div>
-    <div class="ph pit">
+    </div>`:''}
+    ${tp?`<div class="ph pit">
       <div class="ct" style="color:var(--red)">🎯 ACE PITCHER</div>
       <div class="pn">${tp.name}</div><div class="pp">${tp.pos} · ERA Leader</div>
       <div class="ps">${[['ERA',tp.era.toFixed(2),MLB_PIT.era,true],['WHIP',tp.whip.toFixed(2),MLB_PIT.whip,true],['K/9',tp.k9.toFixed(1),MLB_PIT.k9,false],['BB/9',tp.bb9.toFixed(1),MLB_PIT.bb9,true],['FIP',tp.fip.toFixed(2),MLB_PIT.fip,true],['W',tp.w,6,false]].map(([l,v,a,low])=>`<div class="psi"><div class="psl">${l}</div><div class="psv" style="color:${sc(parseFloat(v),a,low)}">${v}</div></div>`).join('')}</div>
-    </div>
+    </div>`:''}
+
     <div class="card" style="background:linear-gradient(135deg,#0a1628,#0d1f2a);border-color:#38bdf844;position:relative;overflow:hidden">
       <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#38bdf8,#0ea5e9)"></div>
       <div class="ct" style="color:var(--blue)">🌤️ TRUIST PARK WEATHER</div>
@@ -1301,17 +1316,44 @@ window.addEventListener('online',()=>{
   refreshAll();
 });
 
-// ── STALENESS WATCHDOG ── (runs every 60s, restarts refresh if timer silently died)
+// ── VISIBILITY WATCHDOG ── (recover when user returns to tab)
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState!=='visible')return;
+  const s=HEALTH.getSt();
+  const stale=!s.lastSync||(Date.now()-s.lastSync)>5*60*1000;
+  if(stale){
+    HEALTH.fix('App resumed from background with stale data — refreshing');
+    refreshAll();
+  }
+});
+
+// ── STALENESS & DOM WATCHDOG ── (runs every 60s)
 setInterval(()=>{
   if(!navigator.onLine)return;
   const s=HEALTH.getSt();
+  // restart dead timer
   if(!refreshTimer){
     HEALTH.fix('Refresh timer was stopped — restarting auto-refresh');
     refreshAll();return;
   }
+  // force refresh if data is stale
   if(s.lastSync&&(Date.now()-s.lastSync)>5*60*1000){
     HEALTH.fix('Data stale >5 min — forcing emergency refresh');
-    refreshAll();
+    refreshAll();return;
+  }
+  // DOM integrity: re-render if content area went blank after a successful render
+  const c=document.getElementById('content');
+  if(c&&lastRenderTime>0&&!c.innerHTML.trim()){
+    HEALTH.fix('Content area found empty — re-rendering current tab');
+    renderTab(currentTab);
+  }
+  // AI insight stuck on spinner >15s after render
+  const ait=document.querySelector('.ait');
+  if(ait&&ait.querySelector('.spin')&&(Date.now()-lastRenderTime)>15000){
+    const d=DATA||SEED;
+    const fb=`Braves sit ${d.record.w}-${d.record.l} atop the NL East — elite pitching and a loaded lineup make them the class of the division. The Chop is very much alive in 2026.`;
+    ait.textContent=fb; aiInsightCache=fb;
+    HEALTH.fix('AI insight stuck on spinner — replaced with static fallback');
   }
 },60*1000);
 
