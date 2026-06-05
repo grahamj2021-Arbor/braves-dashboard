@@ -24,9 +24,9 @@
     #app{display:flex;flex-direction:column;min-height:100dvh;margin:0 auto;position:relative;width:100%}
     /* ── DESKTOP HERO BANNER ── */
     .hero-banner{width:100%;display:block;background:#000;line-height:0;border-bottom:2px solid var(--red)}
-    .hero-banner img{display:block;width:100%;height:auto;max-height:200px;object-fit:cover;object-position:center center}
+    .hero-banner img{display:block;width:100%;height:auto;max-height:130px;object-fit:cover;object-position:center center}
     .hdr-inner{max-width:1400px;margin:0 auto;width:100%}
-    .hdr{background:linear-gradient(135deg,var(--navy),#0a1628);border-bottom:2px solid var(--red);padding:calc(var(--safe-top) + 12px) 16px 12px;flex-shrink:0;box-shadow:0 4px 20px rgba(206,17,65,.25)}
+    .hdr{background:linear-gradient(135deg,var(--navy),#0a1628);border-bottom:2px solid var(--red);padding:calc(var(--safe-top) + 8px) 16px 8px;flex-shrink:0;box-shadow:0 4px 20px rgba(206,17,65,.25)}
     .hdr-row{display:flex;align-items:center;gap:12px}
     .logo{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--navy));display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:15px;color:#fff;box-shadow:0 0 16px rgba(206,17,65,.5);flex-shrink:0}
     .hdr-title{font-family:'Anton',sans-serif;font-size:20px;letter-spacing:1.5px}
@@ -48,15 +48,15 @@
       .bnav-inner .nbtn{flex:0 1 220px;flex-direction:row;gap:10px;padding:14px 18px}
       .bnav-inner .nbtn .ni{font-size:20px}
       .bnav-inner .nbtn .nl{font-size:11px}
-      .hero-banner img{max-height:240px}
+      .hero-banner img{max-height:160px}
     }
     @media (min-width:1280px){
       .content{grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:20px;padding:32px 48px 110px}
-      .hero-banner img{max-height:280px}
+      .hero-banner img{max-height:180px}
     }
     /* On mobile browser, show a slimmer hero crop */
     @media (max-width:899px){
-      .hero-banner img{max-height:110px;object-position:center center}
+      .hero-banner img{max-height:80px;object-position:center center}
     }
     /* ── STATS TAB: batting + pitching side-by-side on desktop ── */
     @media (min-width:900px){
@@ -274,18 +274,7 @@
   </div>
   <div class="hdr">
     <div class="hdr-inner">
-      <div class="hdr-row">
-        <div class="logo">ATL</div>
-        <div>
-          <div class="hdr-title">BRAVES</div>
-          <div class="hdr-sub">2026 · NL EAST · LIVE</div>
-        </div>
-        <div style="margin-left:auto;text-align:right">
-          <div class="hdr-rec" id="hdr-rec">40-19</div>
-          <div class="hdr-rec-sub" id="hdr-rec-sub">1ST · NL EAST · .678</div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+      <div style="display:flex;align-items:center;gap:8px">
         <div class="refresh-pill live" id="refresh-pill" onclick="refreshAll()">
           <div class="pulse"></div>
           <span id="refresh-label">Refreshing every 2 min</span>
