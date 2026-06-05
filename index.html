@@ -20,8 +20,12 @@
       --text:#e8ede9;--muted:#8ab4a0;--dim:#5a7a62;--border:#1e3a26;
       --safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);
     }
-    html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
-    #app{display:flex;flex-direction:column;height:100dvh;max-width:480px;margin:0 auto;position:relative}
+    html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+    #app{display:flex;flex-direction:column;min-height:100dvh;margin:0 auto;position:relative;width:100%}
+    /* ── DESKTOP HERO BANNER ── */
+    .hero-banner{width:100%;display:block;background:#000;line-height:0;border-bottom:2px solid var(--red)}
+    .hero-banner img{display:block;width:100%;height:auto;max-height:520px;object-fit:cover;object-position:center top}
+    .hdr-inner{max-width:1400px;margin:0 auto;width:100%}
     .hdr{background:linear-gradient(135deg,var(--navy),#0a1628);border-bottom:2px solid var(--red);padding:calc(var(--safe-top) + 12px) 16px 12px;flex-shrink:0;box-shadow:0 4px 20px rgba(206,17,65,.25)}
     .hdr-row{display:flex;align-items:center;gap:12px}
     .logo{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--navy));display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:15px;color:#fff;box-shadow:0 0 16px rgba(206,17,65,.5);flex-shrink:0}
@@ -33,8 +37,39 @@
     .refresh-pill.live{color:var(--green);border-color:#22c55e44}
     .pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite}
     @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
-    .content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 12px calc(80px + var(--safe-bottom))}
-    .bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:rgba(10,15,13,.97);backdrop-filter:blur(16px);border-top:1px solid #1e3a26;display:flex;padding-bottom:var(--safe-bottom);z-index:100}
+    .content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 12px calc(80px + var(--safe-bottom));max-width:1400px;margin:0 auto;width:100%}
+    .bnav{position:fixed;bottom:0;left:0;right:0;width:100%;background:rgba(10,15,13,.97);backdrop-filter:blur(16px);border-top:1px solid #1e3a26;display:flex;padding-bottom:var(--safe-bottom);z-index:100;justify-content:center}
+    .bnav-inner{display:flex;width:100%;max-width:1400px}
+    /* ── DESKTOP RESPONSIVE LAYOUT ── */
+    @media (min-width:900px){
+      .content{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px;padding:24px 32px 110px;align-content:start}
+      .content > *{margin-bottom:0}
+      .loading-overlay{grid-column:1 / -1}
+      .bnav-inner .nbtn{flex:0 1 220px;flex-direction:row;gap:10px;padding:14px 18px}
+      .bnav-inner .nbtn .ni{font-size:20px}
+      .bnav-inner .nbtn .nl{font-size:11px}
+      .hero-banner img{max-height:560px}
+    }
+    @media (min-width:1280px){
+      .content{grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:20px;padding:32px 48px 110px}
+    }
+    /* On mobile browser, show a slimmer hero crop */
+    @media (max-width:899px){
+      .hero-banner img{max-height:180px;object-position:center center}
+    }
+    /* ── STANDALONE PWA (iPhone home-screen app) ── */
+    /* Lock to mobile-app feel: no hero image, fixed 480px column, fixed bottom nav */
+    @media all and (display-mode:standalone){
+      #app{max-width:480px;height:100dvh}
+      .hero-banner{display:none}
+      .content{display:block;max-width:none;padding:14px 12px calc(80px + var(--safe-bottom))}
+      .content > *{margin-bottom:12px}
+      .bnav{left:50%;right:auto;transform:translateX(-50%);max-width:480px}
+      .bnav-inner{max-width:480px}
+      .bnav-inner .nbtn{flex:1;flex-direction:column;gap:3px;padding:10px 4px 8px}
+      .bnav-inner .nbtn .ni{font-size:18px}
+      .bnav-inner .nbtn .nl{font-size:8px}
+    }
     .nbtn{flex:1;border:none;background:none;color:var(--dim);padding:10px 4px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .2s;-webkit-tap-highlight-color:transparent;font-family:'DM Sans',sans-serif}
     .nbtn.active{color:var(--green)}
     .nbtn .ni{font-size:18px;line-height:1}
@@ -228,25 +263,30 @@
 </head>
 <body>
 <div id="app">
+  <div class="hero-banner">
+    <img src="braves-header.png" alt="Braves Dashboards"/>
+  </div>
   <div class="hdr">
-    <div class="hdr-row">
-      <div class="logo">ATL</div>
-      <div>
-        <div class="hdr-title">BRAVES</div>
-        <div class="hdr-sub">2026 · NL EAST · LIVE</div>
+    <div class="hdr-inner">
+      <div class="hdr-row">
+        <div class="logo">ATL</div>
+        <div>
+          <div class="hdr-title">BRAVES</div>
+          <div class="hdr-sub">2026 · NL EAST · LIVE</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div class="hdr-rec" id="hdr-rec">40-19</div>
+          <div class="hdr-rec-sub" id="hdr-rec-sub">1ST · NL EAST · .678</div>
+        </div>
       </div>
-      <div style="margin-left:auto;text-align:right">
-        <div class="hdr-rec" id="hdr-rec">40-19</div>
-        <div class="hdr-rec-sub" id="hdr-rec-sub">1ST · NL EAST · .678</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+        <div class="refresh-pill live" id="refresh-pill" onclick="refreshAll()">
+          <div class="pulse"></div>
+          <span id="refresh-label">Refreshing every 2 min</span>
+        </div>
+        <div style="font-size:9px;color:var(--dim);flex:1" id="last-updated"></div>
+        <div id="health-dot" class="green" onclick="showHealth()" title="System Health — tap to view"></div>
       </div>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
-      <div class="refresh-pill live" id="refresh-pill" onclick="refreshAll()">
-        <div class="pulse"></div>
-        <span id="refresh-label">Refreshing every 2 min</span>
-      </div>
-      <div style="font-size:9px;color:var(--dim);flex:1" id="last-updated"></div>
-      <div id="health-dot" class="green" onclick="showHealth()" title="System Health — tap to view"></div>
     </div>
   </div>
 
@@ -258,16 +298,18 @@
   </div>
 
   <nav class="bnav">
-    <button class="nbtn active" onclick="showTab('overview',this)"><span class="ni">🏠</span><span class="nl">Home</span></button>
-    <button class="nbtn" onclick="showTab('stats',this)"><span class="ni">📈</span><span class="nl">Stats</span></button>
-    <button class="nbtn" onclick="showTab('standings',this)"><span class="ni">📊</span><span class="nl">Standings</span></button>
+    <div class="bnav-inner">
+      <button class="nbtn active" onclick="showTab('overview',this)"><span class="ni">🏠</span><span class="nl">Home</span></button>
+      <button class="nbtn" onclick="showTab('stats',this)"><span class="ni">📈</span><span class="nl">Stats</span></button>
+      <button class="nbtn" onclick="showTab('standings',this)"><span class="ni">📊</span><span class="nl">Standings</span></button>
+    </div>
   </nav>
 </div>
 
 <script>
 const MLB_BAT={avg:.248,obp:.318,slg:.413,ops:.731,hr:14,rbi:52,sb:8};
 const MLB_PIT={era:4.20,whip:1.28,k9:8.8,bb9:3.2,fip:4.15};
-let DATA=null, currentTab='overview', refreshTimer=null, aiInsightCache='';
+let DATA=null, currentTab='overview', refreshTimer=null, aiInsightCache='', lastRenderTime=0, aiInsightTimer=null;
 
 // ── HEALTH MONITOR ──
 const HEALTH=(()=>{
@@ -616,15 +658,26 @@ async function refreshAll(){
   if(pill) pill.classList.remove('live');
   if(lbl) lbl.textContent='Updating…';
   // fetch live MLB data and AI insight in parallel
+  clearTimeout(aiInsightTimer);
   const [liveResult]=await Promise.allSettled([
     fetchLiveData(),
-    fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-5-20251001',max_tokens:200,
-        system:'You are a sharp MLB analyst. 2 punchy sentences. No markdown.',
-        messages:[{role:'user',content:`Braves 2026: ${DATA?.record?.w||40}-${DATA?.record?.l||19}, 1st NL East. Sale ERA 2.01, Acuña .249/7HR/12SB. Last game: ${DATA?.lastGame?.recentResults?.slice(-1)[0]?.score||'recent W'}. Hot take.`}]})})
-      .then(r=>r.json()).then(r=>{aiInsightCache=r.content?.map(c=>c.text||'').join('')||aiInsightCache;})
-      .catch(()=>{})
+    fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({messages:[{role:'user',content:`Hot take: 2026 Braves are ${DATA?.record?.w||40}-${DATA?.record?.l||19}, 1st NL East. Sale ERA 2.01, Acuña .249. Last 3 results: ${(DATA?.lastGame?.recentResults||[]).slice(-3).map(r=>`${r.r} vs ${r.opp} ${r.score}`).join(', ')||'recent W'}. Give me two punchy analyst sentences. No markdown.`}]})})
+      .then(r=>r.json()).then(r=>{
+        if(r.text){aiInsightCache=r.text;const el=document.querySelector('.ait');if(el)el.textContent=r.text;}
+      })
+      .catch(e=>HEALTH.warn(`AI insight fetch failed: ${e.message}`))
   ]);
+  // fallback: if insight still loading after 12s, show static text
+  aiInsightTimer=setTimeout(()=>{
+    const el=document.querySelector('.ait');
+    if(el&&el.querySelector('.spin')){
+      const d=DATA||SEED;
+      const fb=`Braves sit ${d.record.w}-${d.record.l} atop the NL East — elite pitching and a red-hot lineup make them the class of the division. The Chop is very much alive in 2026.`;
+      el.textContent=fb; aiInsightCache=fb;
+      HEALTH.fix('AI insight timed out — showing static fallback');
+    }
+  },12000);
   if(liveResult.status==='fulfilled'){
     DATA=mergeLiveData(SEED,liveResult.value);
     HEALTH.ok(`Live sync — ${DATA.record.w}-${DATA.record.l} · ${DATA.batters.length} batters · ${DATA.pitchers.length} pitchers`,DATA.batters.length);
@@ -664,13 +717,16 @@ function renderTab(tab){
     standings:()=>renderStandings(d),
     highlights:()=>renderHighlights(d),
   };
-  if(fns[tab]) HEALTH.safeRender(tab,fns[tab]);
+  if(fns[tab]){lastRenderTime=Date.now();HEALTH.safeRender(tab,fns[tab]);}
 }
 
 // ── OVERVIEW ──
 function renderOverview(d){
-  const tb=d.batters.reduce((a,b)=>b.ops>a.ops?b:a);
-  const tp=d.pitchers.filter(p=>p.pos==='SP').reduce((a,b)=>b.era<a.era?b:a);
+  const tb=d.batters.length?d.batters.reduce((a,b)=>b.ops>a.ops?b:a):null;
+  const spList=d.pitchers.filter(p=>p.pos==='SP');
+  const tp=spList.length?spList.reduce((a,b)=>b.era<a.era?b:a):(d.pitchers.length?d.pitchers[0]:null);
+  if(!tb)HEALTH.warn('No batting data available for overview — batter card hidden');
+  if(!tp)HEALTH.warn('No pitching data available for overview — pitcher card hidden');
   document.getElementById('content').innerHTML=`
     <div class="aic">
       <div class="ail">⚡ AI ANALYST TAKE</div>
@@ -687,16 +743,17 @@ function renderOverview(d){
         <div class="sb"><div class="sl">RUN +/-</div><div class="sv" style="color:var(--green)">${d.record.runDiff}</div><div class="ss">Differential</div></div>
       </div>
     </div>
-    <div class="ph bat">
+    ${tb?`<div class="ph bat">
       <div class="ct" style="color:var(--green)">🏆 TOP BATTER</div>
       <div class="pn">${tb.name}</div><div class="pp">${tb.pos} · OPS Leader</div>
       <div class="ps">${[['AVG',tb.avg.toFixed(3),MLB_BAT.avg,false],['OPS',tb.ops.toFixed(3),MLB_BAT.ops,false],['HR',tb.hr,MLB_BAT.hr,false],['RBI',tb.rbi,MLB_BAT.rbi,false],['OBP',tb.obp.toFixed(3),MLB_BAT.obp,false],['SB',tb.sb,MLB_BAT.sb,false]].map(([l,v,a,low])=>`<div class="psi"><div class="psl">${l}</div><div class="psv" style="color:${sc(parseFloat(v),a,low)}">${v}</div></div>`).join('')}</div>
-    </div>
-    <div class="ph pit">
+    </div>`:''}
+    ${tp?`<div class="ph pit">
       <div class="ct" style="color:var(--red)">🎯 ACE PITCHER</div>
       <div class="pn">${tp.name}</div><div class="pp">${tp.pos} · ERA Leader</div>
       <div class="ps">${[['ERA',tp.era.toFixed(2),MLB_PIT.era,true],['WHIP',tp.whip.toFixed(2),MLB_PIT.whip,true],['K/9',tp.k9.toFixed(1),MLB_PIT.k9,false],['BB/9',tp.bb9.toFixed(1),MLB_PIT.bb9,true],['FIP',tp.fip.toFixed(2),MLB_PIT.fip,true],['W',tp.w,6,false]].map(([l,v,a,low])=>`<div class="psi"><div class="psl">${l}</div><div class="psv" style="color:${sc(parseFloat(v),a,low)}">${v}</div></div>`).join('')}</div>
-    </div>
+    </div>`:''}
+
     <div class="card" style="background:linear-gradient(135deg,#0a1628,#0d1f2a);border-color:#38bdf844;position:relative;overflow:hidden">
       <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#38bdf8,#0ea5e9)"></div>
       <div class="ct" style="color:var(--blue)">🌤️ TRUIST PARK WEATHER</div>
@@ -1301,17 +1358,44 @@ window.addEventListener('online',()=>{
   refreshAll();
 });
 
-// ── STALENESS WATCHDOG ── (runs every 60s, restarts refresh if timer silently died)
+// ── VISIBILITY WATCHDOG ── (recover when user returns to tab)
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState!=='visible')return;
+  const s=HEALTH.getSt();
+  const stale=!s.lastSync||(Date.now()-s.lastSync)>5*60*1000;
+  if(stale){
+    HEALTH.fix('App resumed from background with stale data — refreshing');
+    refreshAll();
+  }
+});
+
+// ── STALENESS & DOM WATCHDOG ── (runs every 60s)
 setInterval(()=>{
   if(!navigator.onLine)return;
   const s=HEALTH.getSt();
+  // restart dead timer
   if(!refreshTimer){
     HEALTH.fix('Refresh timer was stopped — restarting auto-refresh');
     refreshAll();return;
   }
+  // force refresh if data is stale
   if(s.lastSync&&(Date.now()-s.lastSync)>5*60*1000){
     HEALTH.fix('Data stale >5 min — forcing emergency refresh');
-    refreshAll();
+    refreshAll();return;
+  }
+  // DOM integrity: re-render if content area went blank after a successful render
+  const c=document.getElementById('content');
+  if(c&&lastRenderTime>0&&!c.innerHTML.trim()){
+    HEALTH.fix('Content area found empty — re-rendering current tab');
+    renderTab(currentTab);
+  }
+  // AI insight stuck on spinner >15s after render
+  const ait=document.querySelector('.ait');
+  if(ait&&ait.querySelector('.spin')&&(Date.now()-lastRenderTime)>15000){
+    const d=DATA||SEED;
+    const fb=`Braves sit ${d.record.w}-${d.record.l} atop the NL East — elite pitching and a loaded lineup make them the class of the division. The Chop is very much alive in 2026.`;
+    ait.textContent=fb; aiInsightCache=fb;
+    HEALTH.fix('AI insight stuck on spinner — replaced with static fallback');
   }
 },60*1000);
 
