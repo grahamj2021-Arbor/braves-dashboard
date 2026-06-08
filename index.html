@@ -379,7 +379,7 @@ const HEALTH=(()=>{
 
 const SEED={
   record:{w:40,l:19,pct:'.678',home:'21-8',away:'19-11',last10:'8-2',runDiff:'+62'},
-  weather:{condition:'Partly Cloudy',emoji:'⛅',temp:81,feelsLike:86,humidity:62,wind:7,windDir:'SW',rainChance:15,hiTemp:84,loTemp:68,uvIndex:7,
+  weather:{condition:'Partly Cloudy',emoji:'⛅',temp:81,feelsLike:86,humidity:62,wind:7,windDir:'SW',rainChance:15,hiTemp:84,loTemp:68,uvIndex:7,_live:false,
     forecast:[{day:'Today',hi:84,lo:68,icon:'⛅',rain:15},{day:'Sun',hi:87,lo:70,icon:'☀️',rain:5},{day:'Mon',hi:85,lo:69,icon:'⛅',rain:10},{day:'Tue',hi:83,lo:68,icon:'🌦️',rain:35},{day:'Wed',hi:80,lo:66,icon:'🌧️',rain:60}],alert:null},
   batters:[
     {name:'Drake Baldwin',     pos:'C', avg:.303,obp:.389,slg:.543,ops:.932,hr:13,rbi:38,sb:1},
@@ -521,7 +521,7 @@ async function fetchLiveData(){
     HEALTH.safeFetch(`${base}/stats?stats=season&group=pitching&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=60&sportId=1&gameType=R`).catch(()=>null),
     HEALTH.safeFetch(`${base}/teams/${ATL_ID}/roster?rosterType=active&season=${season}`).catch(()=>null),
     HEALTH.safeFetch(`${espnBase}/teams/15?enable=roster,stats`).catch(()=>null),
-    HEALTH.safeFetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=5&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=America%2FNew_York`).catch(()=>null)
+    HEALTH.safeFetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code,uv_index&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=5&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto`).catch(()=>null)
   ]);
 
   // Parse schedule early so we can find last game ID for boxscore fetch
@@ -726,6 +726,8 @@ function mergeLiveData(seed,live){
       d.weather.wind=Math.round(c.wind_speed_10m);
       d.weather.windDir=_windDir(c.wind_direction_10m);
       d.weather.rainChance=c.precipitation_probability||0;
+      d.weather.uvIndex=Math.round(c.uv_index||0);
+      d.weather._live=true;
       const wx=_wmoDesc(c.weather_code);
       d.weather.emoji=wx.emoji;d.weather.condition=wx.condition;
       if(dl){
@@ -935,7 +937,7 @@ function renderOverview(d){
 
     <div class="card" style="background:linear-gradient(135deg,#0a1628,#0d1f2a);border-color:#38bdf844;position:relative;overflow:hidden">
       <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#38bdf8,#0ea5e9)"></div>
-      <div class="ct" style="color:var(--blue)">🌤️ TRUIST PARK WEATHER</div>
+      <div class="ct" style="color:var(--blue)">🌤️ TRUIST PARK WEATHER <span style="font-size:9px;color:${d.weather._live?'var(--green)':'var(--yellow)'}">● ${d.weather._live?'LIVE':'CACHED'}</span></div>
       <div class="wm"><div style="font-size:36px">${d.weather.emoji}</div><div class="wt">${d.weather.temp}°</div>
         <div><div style="font-weight:700;font-size:15px">${d.weather.condition}</div><div style="font-size:12px;color:var(--muted)">Feels like ${d.weather.feelsLike}°F</div><div style="font-size:12px;color:var(--muted)">Hi ${d.weather.hiTemp}° · Lo ${d.weather.loTemp}°</div></div>
       </div>
