@@ -458,19 +458,22 @@ async function fetchLiveData(){
   const start=_fmtDate(new Date(+today-14*864e5));
   const end=_fmtDate(new Date(+today+7*864e5));
   const base=`https://statsapi.mlb.com/api/v1`;
-  const [sr,gr,br,pr,rr]=await Promise.all([
+  const espnBase=`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb`;
+  const [sr,gr,br,pr,rr,er]=await Promise.all([
     HEALTH.safeFetch(`${base}/standings?leagueId=104&season=${season}&standingsTypes=regularSeason&hydrate=team,records`),
     HEALTH.safeFetch(`${base}/schedule?sportId=1&teamId=${ATL_ID}&startDate=${start}&endDate=${end}&hydrate=linescore,team`),
-    HEALTH.safeFetch(`${base}/stats?stats=season&group=hitting&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=40&sportId=1&gameType=R`).catch(()=>null),
-    HEALTH.safeFetch(`${base}/stats?stats=season&group=pitching&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=40&sportId=1&gameType=R`).catch(()=>null),
-    HEALTH.safeFetch(`${base}/teams/${ATL_ID}/roster?rosterType=active&season=${season}`).catch(()=>null)
+    HEALTH.safeFetch(`${base}/stats?stats=season&group=hitting&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=60&sportId=1&gameType=R`).catch(()=>null),
+    HEALTH.safeFetch(`${base}/stats?stats=season&group=pitching&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=60&sportId=1&gameType=R`).catch(()=>null),
+    HEALTH.safeFetch(`${base}/teams/${ATL_ID}/roster?rosterType=active&season=${season}`).catch(()=>null),
+    HEALTH.safeFetch(`${espnBase}/teams/15?enable=roster,stats`).catch(()=>null)
   ]);
   return{
     standings:await sr.json(),
     schedule:await gr.json(),
     batting:br?await br.json():null,
     pitching:pr?await pr.json():null,
-    roster:rr?await rr.json():null
+    roster:rr?await rr.json():null,
+    espn:er?await er.json().catch(()=>null):null
   };
 }
 
@@ -552,10 +555,10 @@ function mergeLiveData(seed,live){
   const fp=v=>parseFloat(String(v||'0').replace(/[^0-9.\-]/g,''))||0;
 
   if(live.batting){
-    // /stats endpoint returns splits directly under stats[0].splits
     const splits=[...(live.batting.stats||[])].flatMap(s=>s.splits||[]);
+    HEALTH.info(`MLB batting API: ${splits.length} player splits returned`);
     const batters=splits
-      .filter(s=>(s.stat.plateAppearances||0)>=25)
+      .filter(s=>parseInt(s.stat.plateAppearances||s.stat.atBats||0)>=10)
       .map(s=>({
         name:s.player?.fullName||s.person?.fullName||'Unknown',
         pos:posMap[s.player?.id||s.person?.id]||'—',
@@ -567,26 +570,33 @@ function mergeLiveData(seed,live){
         rbi:s.stat.rbi||0,
         sb:s.stat.stolenBases||0,
       }))
+      .filter(b=>b.ops>0)
       .sort((a,b)=>b.ops-a.ops)
       .slice(0,12);
-    if(batters.length>0){d.batters=batters;}
-    else{HEALTH.fix('Batting API returned 0 qualifying players — keeping SEED roster');}
+    if(batters.length>0){
+      d.batters=batters;
+      d._liveSource='mlb';
+      HEALTH.ok(`Live batting: ${batters.length} players — leader ${batters[0].name} ${batters[0].ops.toFixed(3)} OPS`);
+    }else{
+      HEALTH.warn(`Batting API returned ${splits.length} splits but 0 with 10+ PA/AB — keeping SEED roster`);
+    }
+  }else{
+    HEALTH.warn('MLB batting stats API failed — showing SEED roster');
   }
 
   if(live.pitching){
     const splits=[...(live.pitching.stats||[])].flatMap(s=>s.splits||[]);
-    const FIP_C=3.15; // 2026 FIP constant
+    HEALTH.info(`MLB pitching API: ${splits.length} pitcher splits returned`);
+    const FIP_C=3.15;
     const pitchers=splits
       .filter(s=>{
-        // Require at least 5 full innings to exclude position players who pitched
         const ip=String(s.stat.inningsPitched||'0');
-        return(parseInt(ip.split('.')[0]||'0')>=5);
+        return(parseInt(ip.split('.')[0]||'0')>=3);
       })
       .map(s=>{
         const st=s.stat;
         const gs=st.gamesStarted||0,g=Math.max(st.gamesPitched||1,1);
-        const isSP=gs>=3&&(gs/g)>=0.4;
-        // Convert "67.0" / "67.1" / "67.2" to decimal IP for FIP
+        const isSP=gs>=2&&(gs/g)>=0.35;
         const ipParts=String(st.inningsPitched||'0').split('.');
         const ipDec=(parseInt(ipParts[0]||'0'))+(parseInt(ipParts[1]||'0')/3);
         const fipRaw=ipDec>0?((13*(st.homeRuns||0)+3*((st.baseOnBalls||0)+(st.hitByPitch||0))-2*(st.strikeOuts||0))/ipDec+FIP_C):0;
@@ -602,11 +612,29 @@ function mergeLiveData(seed,live){
           sv:st.saves||0,
         };
       })
+      .filter(p=>p.era>=0)
       .sort((a,b)=>{if(a.pos!==b.pos)return a.pos==='SP'?-1:1;return a.era-b.era;})
       .slice(0,12);
-    if(pitchers.length>0){d.pitchers=pitchers;}
-    else{HEALTH.fix('Pitching API returned 0 qualifying pitchers (5+ IP) — keeping SEED roster');}
+    if(pitchers.length>0){
+      d.pitchers=pitchers;
+      const ace=pitchers.find(p=>p.pos==='SP')||pitchers[0];
+      HEALTH.ok(`Live pitching: ${pitchers.length} pitchers — ace ${ace.name} ${ace.era.toFixed(2)} ERA`);
+    }else{
+      HEALTH.warn(`Pitching API returned ${splits.length} splits but 0 with 3+ IP — keeping SEED roster`);
+    }
+  }else{
+    HEALTH.warn('MLB pitching stats API failed — showing SEED roster');
   }
+
+  // Supplement with ESPN team stats if available
+  if(live.espn&&live.espn.team){
+    try{
+      const espnTeam=live.espn.team;
+      const stats=espnTeam.seasonStats||espnTeam.record?.items?.[0]?.stats||[];
+      HEALTH.info(`ESPN team data fetched — ${stats.length} stat fields`);
+    }catch(e){HEALTH.warn(`ESPN parse failed: ${e.message}`);}
+  }
+
   return d;
 }
 
@@ -620,7 +648,7 @@ async function refreshAll(){
   const [liveResult]=await Promise.allSettled([
     fetchLiveData(),
     fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:[{role:'user',content:`Hot take: 2026 Braves are ${DATA?.record?.w||40}-${DATA?.record?.l||19}, 1st NL East. Sale ERA 2.01, Acuña .249. Last 3 results: ${(DATA?.lastGame?.recentResults||[]).slice(-3).map(r=>`${r.r} vs ${r.opp} ${r.score}`).join(', ')||'recent W'}. Give me two punchy analyst sentences. No markdown.`}]})})
+      body:JSON.stringify({messages:[{role:'user',content:(()=>{const d=DATA||SEED;const tb=d.batters.length?d.batters.reduce((a,b)=>b.ops>a.ops?b:a):null;const sp=d.pitchers.filter(p=>p.pos==='SP');const tp=sp.length?sp.reduce((a,b)=>b.era<a.era?b:a):null;return`Hot take: 2026 Braves are ${d.record.w}-${d.record.l}, 1st NL East. Top batter: ${tb?tb.name+' '+tb.ops.toFixed(3)+' OPS':'—'}. Ace: ${tp?tp.name+' '+tp.era.toFixed(2)+' ERA':'—'}. Last 3: ${(d.lastGame?.recentResults||[]).slice(-3).map(r=>`${r.r} vs ${r.opp} ${r.score}`).join(', ')||'recent W'}. Two punchy analyst sentences. No markdown.`})()}]})})
       .then(r=>r.json()).then(r=>{
         if(r.text){aiInsightCache=r.text;const el=document.querySelector('.ait');if(el)el.textContent=r.text;}
       })
@@ -702,13 +730,13 @@ function renderOverview(d){
       </div>
     </div>
     ${tb?`<div class="ph bat">
-      <div class="ct" style="color:var(--green)">🏆 TOP BATTER</div>
-      <div class="pn">${tb.name}</div><div class="pp">${tb.pos} · OPS Leader</div>
+      <div class="ct" style="color:var(--green)">🏆 TOP BATTER <span style="font-size:9px;color:${d._liveSource?'var(--green)':'var(--yellow)'}">● ${d._liveSource?'LIVE':'SEED'}</span></div>
+      <div class="pn">${tb.name}</div><div class="pp">${tb.pos} · OPS Leader · Updated ${stamp()}</div>
       <div class="ps">${[['AVG',tb.avg.toFixed(3),MLB_BAT.avg,false],['OPS',tb.ops.toFixed(3),MLB_BAT.ops,false],['HR',tb.hr,MLB_BAT.hr,false],['RBI',tb.rbi,MLB_BAT.rbi,false],['OBP',tb.obp.toFixed(3),MLB_BAT.obp,false],['SB',tb.sb,MLB_BAT.sb,false]].map(([l,v,a,low])=>`<div class="psi"><div class="psl">${l}</div><div class="psv" style="color:${sc(parseFloat(v),a,low)}">${v}</div></div>`).join('')}</div>
     </div>`:''}
     ${tp?`<div class="ph pit">
-      <div class="ct" style="color:var(--red)">🎯 ACE PITCHER</div>
-      <div class="pn">${tp.name}</div><div class="pp">${tp.pos} · ERA Leader</div>
+      <div class="ct" style="color:var(--red)">🎯 ACE PITCHER <span style="font-size:9px;color:${d._liveSource?'var(--green)':'var(--yellow)'}">● ${d._liveSource?'LIVE':'SEED'}</span></div>
+      <div class="pn">${tp.name}</div><div class="pp">${tp.pos} · ERA Leader · Updated ${stamp()}</div>
       <div class="ps">${[['ERA',tp.era.toFixed(2),MLB_PIT.era,true],['WHIP',tp.whip.toFixed(2),MLB_PIT.whip,true],['K/9',tp.k9.toFixed(1),MLB_PIT.k9,false],['BB/9',tp.bb9.toFixed(1),MLB_PIT.bb9,true],['FIP',tp.fip.toFixed(2),MLB_PIT.fip,true],['W',tp.w,6,false]].map(([l,v,a,low])=>`<div class="psi"><div class="psl">${l}</div><div class="psv" style="color:${sc(parseFloat(v),a,low)}">${v}</div></div>`).join('')}</div>
     </div>`:''}
 
@@ -735,7 +763,9 @@ function renderOverview(d){
 
 // ── STATISTICS ──
 function renderStats(d){
+  const src=d._liveSource?`<span style="color:var(--green)">● LIVE — Updated ${stamp()}</span>`:`<span style="color:var(--yellow)">● SEED DATA — Live fetch failed, retrying…</span>`;
   document.getElementById('content').innerHTML=`
+    <div style="font-size:11px;margin-bottom:10px">${src}</div>
     <div class="leg"><span><span class="dot" style="background:var(--green)"></span>Above MLB Avg</span><span><span class="dot" style="background:var(--yellow)"></span>Near Avg</span><span><span class="dot" style="background:var(--crimson)"></span>Below Avg</span></div>
     <div class="card">
       <div class="ct" style="color:var(--green)">🏏 BATTING</div>
