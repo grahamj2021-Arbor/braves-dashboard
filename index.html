@@ -530,7 +530,7 @@ async function fetchLiveData(){
     HEALTH.safeFetch(`${base}/stats?stats=season&group=pitching&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=60&sportId=1&gameType=R`).catch(()=>null),
     HEALTH.safeFetch(`${base}/teams/${ATL_ID}/roster?rosterType=active&season=${season}`).catch(()=>null),
     HEALTH.safeFetch(`${espnBase}/teams/15?enable=roster,stats`).catch(()=>null),
-    HEALTH.safeFetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code,uv_index&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=5&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto`).catch(()=>null)
+    HEALTH.safeFetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=5&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,uv_index_max&timezone=auto`).catch(()=>null)
   ]);
 
   // Parse schedule early so we can find last game ID for boxscore fetch
@@ -734,12 +734,12 @@ function mergeLiveData(seed,live){
       d.weather.humidity=Math.round(c.relative_humidity_2m);
       d.weather.wind=Math.round(c.wind_speed_10m);
       d.weather.windDir=_windDir(c.wind_direction_10m);
-      d.weather.rainChance=c.precipitation_probability||0;
-      d.weather.uvIndex=Math.round(c.uv_index||0);
-      d.weather._live=true;
       const wx=_wmoDesc(c.weather_code);
       d.weather.emoji=wx.emoji;d.weather.condition=wx.condition;
+      // rain chance and UV come from daily[0] (not available in current variables)
       if(dl){
+        d.weather.rainChance=dl.precipitation_probability_max?.[0]||0;
+        d.weather.uvIndex=Math.round(dl.uv_index_max?.[0]||0);
         d.weather.hiTemp=Math.round(dl.temperature_2m_max[0]);
         d.weather.loTemp=Math.round(dl.temperature_2m_min[0]);
         d.weather.forecast=(dl.time||[]).slice(0,5).map((dt,i)=>{
@@ -748,7 +748,8 @@ function mergeLiveData(seed,live){
           return{day:dn,hi:Math.round(dl.temperature_2m_max[i]),lo:Math.round(dl.temperature_2m_min[i]),icon:w2.emoji,rain:dl.precipitation_probability_max[i]||0};
         });
       }
-      HEALTH.ok(`Live weather: ${d.weather.temp}°F ${d.weather.condition} ${d.weather.rainChance}% rain`);
+      d.weather._live=true;
+      HEALTH.ok(`Live weather: ${d.weather.temp}°F ${d.weather.condition} ${d.weather.rainChance}% rain UV:${d.weather.uvIndex}`);
     }catch(e){HEALTH.warn(`Weather parse error: ${e.message}`);}
   }else{HEALTH.warn('Open-Meteo weather fetch failed — showing cached weather');}
 
