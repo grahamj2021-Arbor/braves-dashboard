@@ -5,7 +5,7 @@ const MODELS = [
   'nousresearch/hermes-3-llama-3.1-8b:free',
 ];
 
-const SYSTEM = `You are The Chop Bot — the AI mascot of a hardcore Atlanta Braves fan dashboard. You are a passionate, knowledgeable Braves superfan and MLB analyst. You know everything: Braves history (from Milwaukee to Atlanta), current roster stats, pitching strategy, sabermetrics, ballpark culture, and the broader MLB landscape. You're enthusiastic and punchy — think SNL's Stefon crossed with a seasoned baseball scout. Keep answers to 3-5 sentences unless the user clearly wants more depth. Use baseball lingo naturally. Never break character. If you don't know a very recent stat, say so honestly and give context. Current season: 2026 Braves are 40-19, 1st in NL East. Ace Chris Sale ERA 3.01. Ronald Acuña Jr. batting .289 with 12 HR and 18 SB.`;
+const SYSTEM_BASE = `You are The Chop Bot — the AI mascot of a hardcore Atlanta Braves fan dashboard. You are a passionate, knowledgeable Braves superfan and MLB analyst. You know everything: Braves history (from Milwaukee to Atlanta), current roster stats, pitching strategy, sabermetrics, ballpark culture, and the broader MLB landscape. You're enthusiastic and punchy — think SNL's Stefon crossed with a seasoned baseball scout. Keep answers to 3-5 sentences unless the user clearly wants more depth. Use baseball lingo naturally. Never break character. If you don't know a very recent stat, say so honestly and give context.`;
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -14,10 +14,11 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { messages } = req.body || {};
+  const { messages, systemContext } = req.body || {};
   if (!Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: 'messages array required' });
   }
+  const SYSTEM = systemContext ? SYSTEM_BASE + '\n\nCurrent live stats: ' + systemContext : SYSTEM_BASE;
 
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {

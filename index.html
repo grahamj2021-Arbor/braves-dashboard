@@ -274,7 +274,12 @@
   </div>
   <div class="hdr">
     <div class="hdr-inner">
-      <div style="display:flex;align-items:center;gap:8px">
+      <div class="hdr-row">
+        <div class="logo">ATL</div>
+        <div><div class="hdr-title">BRAVES DASHBOARD</div><div class="hdr-sub">LIVE · 2026 SEASON</div></div>
+        <div style="margin-left:auto;text-align:right"><div class="hdr-rec" id="hdr-rec">40-19</div><div class="hdr-rec-sub" id="hdr-rec-sub">1ST · NL EAST · .678</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
         <div class="refresh-pill live" id="refresh-pill" onclick="refreshAll()">
           <div class="pulse"></div>
           <span id="refresh-label">Refreshing every 2 min</span>
@@ -296,7 +301,11 @@
     <div class="bnav-inner">
       <button class="nbtn active" onclick="showTab('overview',this)"><span class="ni">🏠</span><span class="nl">Home</span></button>
       <button class="nbtn" onclick="showTab('stats',this)"><span class="ni">📈</span><span class="nl">Stats</span></button>
-      <button class="nbtn" onclick="showTab('standings',this)"><span class="ni">📊</span><span class="nl">Standings</span></button>
+      <button class="nbtn" onclick="showTab('standings',this)"><span class="ni">📊</span><span class="nl">Stands</span></button>
+      <button class="nbtn" onclick="showTab('highlights',this)"><span class="ni">🎬</span><span class="nl">Game</span></button>
+      <button class="nbtn" onclick="showTab('series',this)"><span class="ni">⚾</span><span class="nl">Series</span></button>
+      <button class="nbtn" onclick="showTab('predictor',this)"><span class="ni">🎯</span><span class="nl">Predict</span></button>
+      <button class="nbtn" onclick="showTab('chopbot',this)"><span class="ni">🤖</span><span class="nl">Bot</span></button>
     </div>
   </nav>
 </div>
@@ -473,7 +482,7 @@ const SEED={
   },
 };
 
-function pct(w,l){return(w/(w+l)).toFixed(3).replace('0.','.')}
+function pct(w,l){if(!w&&!l)return'.000';return(w/(w+l)).toFixed(3).replace('0.','.')}
 function gb(tw,tl,w,l){const g=((tw-w)+(l-tl))/2;return g===0?'—':g.toFixed(1)}
 function rainColor(r){return r>=60?'var(--crimson)':r>=30?'var(--yellow)':'var(--green)'}
 function sc(v,a,low=false){const d=low?a-v:v-a;return d>0.05*a?'var(--green)':d<-0.05*a?'var(--crimson)':'var(--yellow)'}
@@ -515,7 +524,7 @@ async function fetchLiveData(){
 
   // First parallel wave: primary data sources
   const [sr,gr,br,pr,rr,er,wr]=await Promise.all([
-    HEALTH.safeFetch(`${base}/standings?leagueId=104&season=${season}&standingsTypes=regularSeason&hydrate=team,records`),
+    HEALTH.safeFetch(`${base}/standings?leagueId=103,104&season=${season}&standingsTypes=regularSeason&hydrate=team,records`),
     HEALTH.safeFetch(`${base}/schedule?sportId=1&teamId=${ATL_ID}&startDate=${start}&endDate=${end}&hydrate=linescore,team,decisions`),
     HEALTH.safeFetch(`${base}/stats?stats=season&group=hitting&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=60&sportId=1&gameType=R`).catch(()=>null),
     HEALTH.safeFetch(`${base}/stats?stats=season&group=pitching&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=60&sportId=1&gameType=R`).catch(()=>null),
@@ -897,6 +906,9 @@ function renderTab(tab){
     stats:()=>renderStats(d),
     standings:()=>renderStandings(d),
     highlights:()=>renderHighlights(d),
+    series:()=>renderSeries(d),
+    predictor:()=>renderPredictor(),
+    chopbot:()=>renderChopBot(),
   };
   if(fns[tab]){lastRenderTime=Date.now();HEALTH.safeRender(tab,fns[tab]);}
 }
@@ -995,7 +1007,7 @@ function renderSeries(d){
         <span>ATL</span><span style="text-align:center">CATEGORY</span><span>${d.nextOpp.abbr}</span>
       </div>
       ${d.matchup.map(row=>`<div class="mrow"><div class="mav" style="color:${row.favors==='ATL'?'var(--green)':'var(--crimson)'}">${row.atl}</div><div class="mlab">${row.label}</div><div class="mbv" style="color:${row.favors==='OPP'?'var(--green)':'var(--crimson)'}">${row.opp}</div></div>`).join('')}
-      <div class="ebox"><span style="color:var(--green);font-weight:700">Braves lead in 5 of 6 categories.</span><span style="color:var(--muted)"> ${d.nextOpp.abbr} holds home field. 🪓</span></div>
+      <div class="ebox"><span style="color:var(--green);font-weight:700">Braves lead in ${d.matchup.filter(r=>r.favors==='ATL').length} of ${d.matchup.length} categories.</span><span style="color:var(--muted)"> ${d.nextOpp.abbr} has the edge in ${d.matchup.filter(r=>r.favors==='OPP').length}. 🪓</span></div>
     </div>`;
 }
 
@@ -1020,18 +1032,25 @@ function renderStandings(d){
 // ── HIGHLIGHTS ──
 function renderHighlights(d){
   const g=d.lastGame;
+  const atlIsHome=g.home.abbr==='ATL';
+  const opp=atlIsHome?g.away.abbr:g.home.abbr;
+  const atlScore=atlIsHome?g.home.runs:g.away.runs;
+  const oppScore=atlIsHome?g.away.runs:g.home.runs;
+  const atlH=atlIsHome?(g.home.hits??0):(g.away.hits??0);
+  const oppH=atlIsHome?(g.away.hits??0):(g.home.hits??0);
+  const atlE=atlIsHome?(g.home.errors??0):(g.away.errors??0);
+  const oppE=atlIsHome?(g.away.errors??0):(g.home.errors??0);
   const lsA=g.innings.map(i=>`<td style="text-align:center;padding:5px 3px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim)">${i.inn}</td>`).join('');
   const lsATL=g.innings.map(i=>`<td style="text-align:center;padding:5px 3px;font-family:'JetBrains Mono',monospace;font-size:12px;color:${i.atl>0?'var(--green)':'var(--muted)'}">${i.atl}</td>`).join('');
   const lsOPP=g.innings.map(i=>{const k=Object.keys(i).find(k=>k!=='inn'&&k!=='atl');const v=i[k]||0;return`<td style="text-align:center;padding:5px 3px;font-family:'JetBrains Mono',monospace;font-size:12px;color:${v>0?'var(--crimson)':'var(--muted)'}">${v}</td>`;}).join('');
-  const opp=g.home.abbr;
   document.getElementById('content').innerHTML=`
     <div style="background:linear-gradient(135deg,#0d1f0f,#0a1628);border:1px solid #22c55e44;border-radius:14px;padding:18px 16px;margin-bottom:12px;position:relative;overflow:hidden">
       <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--green),var(--red))"></div>
       <div style="font-size:10px;color:var(--green);letter-spacing:2px;font-weight:700;margin-bottom:10px">🎬 LAST GAME · ${g.date}</div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div style="text-align:center;flex:1"><div style="font-family:'Anton',sans-serif;font-size:14px;color:var(--muted)">ATL</div><div style="font-family:'Anton',sans-serif;font-size:52px;color:var(--green);line-height:1;text-shadow:0 0 20px rgba(34,197,94,.4)">${g.away.runs}</div><div style="font-size:10px;color:var(--dim)">${g.away.hits} H · ${g.away.errors} E</div></div>
+        <div style="text-align:center;flex:1"><div style="font-family:'Anton',sans-serif;font-size:14px;color:var(--muted)">ATL</div><div style="font-family:'Anton',sans-serif;font-size:52px;color:var(--green);line-height:1;text-shadow:0 0 20px rgba(34,197,94,.4)">${atlScore}</div><div style="font-size:10px;color:var(--dim)">${atlH} H · ${atlE} E</div></div>
         <div style="text-align:center;padding:0 8px"><div style="font-family:'Anton',sans-serif;font-size:20px;color:var(--dim)">FINAL</div><div style="font-size:10px;color:var(--dim);margin-top:2px">${g.venue}</div></div>
-        <div style="text-align:center;flex:1"><div style="font-family:'Anton',sans-serif;font-size:14px;color:var(--muted)">${opp}</div><div style="font-family:'Anton',sans-serif;font-size:52px;color:var(--crimson);line-height:1;text-shadow:0 0 20px rgba(239,68,68,.3)">${g.home.runs}</div><div style="font-size:10px;color:var(--dim)">${g.home.hits} H · ${g.home.errors} E</div></div>
+        <div style="text-align:center;flex:1"><div style="font-family:'Anton',sans-serif;font-size:14px;color:var(--muted)">${opp}</div><div style="font-family:'Anton',sans-serif;font-size:52px;color:var(--crimson);line-height:1;text-shadow:0 0 20px rgba(239,68,68,.3)">${oppScore}</div><div style="font-size:10px;color:var(--dim)">${oppH} H · ${oppE} E</div></div>
       </div>
       <div style="font-size:13px;color:#d4edda;line-height:1.6;border-top:1px solid var(--border);padding-top:10px">${g.recap}</div>
       <div style="display:flex;gap:12px;margin-top:10px;font-size:12px"><span>✅ <strong style="color:var(--green)">${g.winner}</strong></span><span>❌ <strong style="color:var(--crimson)">${g.loser}</strong></span></div>
@@ -1041,8 +1060,8 @@ function renderHighlights(d){
       <table style="width:100%;border-collapse:collapse;min-width:300px">
         <thead><tr><td style="width:36px"></td>${lsA}<td style="text-align:center;padding:5px 5px;font-size:11px;color:var(--dim);font-weight:700;border-left:1px solid var(--border)">R</td><td style="text-align:center;padding:5px 3px;font-size:11px;color:var(--dim);font-weight:700">H</td><td style="text-align:center;padding:5px 3px;font-size:11px;color:var(--dim);font-weight:700">E</td></tr></thead>
         <tbody>
-          <tr style="background:#22c55e08"><td style="padding:5px;font-family:'Anton',sans-serif;font-size:13px;color:var(--green)">ATL</td>${lsATL}<td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--green);border-left:1px solid var(--border)">${g.away.runs}</td><td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">${g.away.hits}</td><td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">${g.away.errors}</td></tr>
-          <tr><td style="padding:5px;font-family:'Anton',sans-serif;font-size:13px;color:var(--crimson)">${opp}</td>${lsOPP}<td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--crimson);border-left:1px solid var(--border)">${g.home.runs}</td><td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">${g.home.hits}</td><td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">${g.home.errors}</td></tr>
+          <tr style="background:#22c55e08"><td style="padding:5px;font-family:'Anton',sans-serif;font-size:13px;color:var(--green)">ATL</td>${lsATL}<td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--green);border-left:1px solid var(--border)">${atlScore}</td><td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">${atlH}</td><td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">${atlE}</td></tr>
+          <tr><td style="padding:5px;font-family:'Anton',sans-serif;font-size:13px;color:var(--crimson)">${opp}</td>${lsOPP}<td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--crimson);border-left:1px solid var(--border)">${oppScore}</td><td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">${oppH}</td><td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">${oppE}</td></tr>
         </tbody>
       </table>
     </div>
@@ -1126,9 +1145,14 @@ async function cbSend(override){
   cbAddBubble('bot','',true);
 
   try{
+    const _cd=DATA||SEED;
+    const _tb=_cd.batters.length?_cd.batters.reduce((a,b)=>b.ops>a.ops?b:a):null;
+    const _sp=_cd.pitchers.filter(p=>p.pos==='SP');
+    const _tp=_sp.length?_sp.reduce((a,b)=>b.era<a.era?b:a):null;
+    const systemContext=`Braves are ${_cd.record.w}-${_cd.record.l} (${_cd.record.pct}), 1st NL East. Last 10: ${_cd.record.last10}. Run diff: ${_cd.record.runDiff}. Top batter: ${_tb?_tb.name+' '+_tb.ops.toFixed(3)+' OPS':'-'}. Ace: ${_tp?_tp.name+' '+_tp.era.toFixed(2)+' ERA':'-'}. Stats source: ${_cd._liveSource?'MLB Live API':'seed data'}.`;
     const res=await fetch('/api/chat',{method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:cbApiHist})});
+      body:JSON.stringify({messages:cbApiHist,systemContext})});
     const data=await res.json();
     const reply=data.text||'Sorry, had trouble with that one — try again! 🪓';
     cbApiHist.push({role:'assistant',content:reply});
