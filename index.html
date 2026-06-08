@@ -488,6 +488,20 @@ function _shortDate(s){const[,m,d]=s.split('-');return['Jan','Feb','Mar','Apr','
 function _longDate(s){return new Date(s+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'})}
 function _dayLabel(s){return new Date(s+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}
 function _gameTime(iso){if(!iso)return'TBD';try{return new Date(iso).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true,timeZone:'America/New_York'})+' EDT'}catch(e){return'TBD'}}
+// ── Weather helpers (WMO codes → emoji/description) ──
+function _wmoDesc(code){
+  const c=code||0;
+  if(c===0)return{emoji:'☀️',condition:'Clear'};
+  if(c<=2)return{emoji:'🌤️',condition:'Mostly Clear'};
+  if(c===3)return{emoji:'⛅',condition:'Partly Cloudy'};
+  if(c<=48)return{emoji:'🌫️',condition:'Foggy'};
+  if(c<=55)return{emoji:'🌦️',condition:'Drizzle'};
+  if(c<=65)return{emoji:'🌧️',condition:'Rain'};
+  if(c<=77)return{emoji:'❄️',condition:'Snow'};
+  if(c<=82)return{emoji:'🌦️',condition:'Showers'};
+  return{emoji:'⛈️',condition:'Thunderstorm'};
+}
+function _windDir(deg){return['N','NE','E','SE','S','SW','W','NW'][Math.round((deg||0)/45)%8];}
 
 async function fetchLiveData(){
   const season=new Date().getFullYear();
@@ -496,21 +510,49 @@ async function fetchLiveData(){
   const end=_fmtDate(new Date(+today+7*864e5));
   const base=`https://statsapi.mlb.com/api/v1`;
   const espnBase=`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb`;
-  const [sr,gr,br,pr,rr,er]=await Promise.all([
+  // Truist Park, Atlanta
+  const LAT=33.891, LON=-84.468;
+
+  // First parallel wave: primary data sources
+  const [sr,gr,br,pr,rr,er,wr]=await Promise.all([
     HEALTH.safeFetch(`${base}/standings?leagueId=104&season=${season}&standingsTypes=regularSeason&hydrate=team,records`),
-    HEALTH.safeFetch(`${base}/schedule?sportId=1&teamId=${ATL_ID}&startDate=${start}&endDate=${end}&hydrate=linescore,team`),
+    HEALTH.safeFetch(`${base}/schedule?sportId=1&teamId=${ATL_ID}&startDate=${start}&endDate=${end}&hydrate=linescore,team,decisions`),
     HEALTH.safeFetch(`${base}/stats?stats=season&group=hitting&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=60&sportId=1&gameType=R`).catch(()=>null),
     HEALTH.safeFetch(`${base}/stats?stats=season&group=pitching&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=60&sportId=1&gameType=R`).catch(()=>null),
     HEALTH.safeFetch(`${base}/teams/${ATL_ID}/roster?rosterType=active&season=${season}`).catch(()=>null),
-    HEALTH.safeFetch(`${espnBase}/teams/15?enable=roster,stats`).catch(()=>null)
+    HEALTH.safeFetch(`${espnBase}/teams/15?enable=roster,stats`).catch(()=>null),
+    HEALTH.safeFetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=5&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=America%2FNew_York`).catch(()=>null)
   ]);
+
+  // Parse schedule early so we can find last game ID for boxscore fetch
+  const scheduleJ=await gr.json();
+  let lastGamePk=null;
+  for(const day of scheduleJ.dates||[]){
+    for(const g of day.games||[]){
+      if(g.status?.abstractGameState==='Final') lastGamePk=g.gamePk;
+    }
+  }
+
+  // Second parallel wave: remaining JSON + boxscore for last game
+  const [standingsJ,battingJ,pitchingJ,rosterJ,espnJ,weatherJ,boxscoreJ]=await Promise.all([
+    sr.json(),
+    br?br.json():Promise.resolve(null),
+    pr?pr.json():Promise.resolve(null),
+    rr?rr.json():Promise.resolve(null),
+    er?er.json().catch(()=>null):Promise.resolve(null),
+    wr?wr.json().catch(()=>null):Promise.resolve(null),
+    lastGamePk?HEALTH.safeFetch(`${base}/game/${lastGamePk}/boxscore`).then(r=>r.json()).catch(()=>null):Promise.resolve(null)
+  ]);
+
   return{
-    standings:await sr.json(),
-    schedule:await gr.json(),
-    batting:br?await br.json():null,
-    pitching:pr?await pr.json():null,
-    roster:rr?await rr.json():null,
-    espn:er?await er.json().catch(()=>null):null
+    standings:standingsJ,
+    schedule:scheduleJ,
+    batting:battingJ,
+    pitching:pitchingJ,
+    roster:rosterJ,
+    espn:espnJ,
+    weather:weatherJ,
+    boxscore:boxscoreJ
   };
 }
 
@@ -553,6 +595,7 @@ function mergeLiveData(seed,live){
   }
   // ── Schedule ──
   const completed=[],upcoming=[];
+  let _lastSchedGame=null;
   for(const day of live.schedule.dates||[]){
     for(const g of day.games||[]){
       const isHome=g.teams?.home?.team?.id===ATL_ID;
@@ -563,6 +606,7 @@ function mergeLiveData(seed,live){
         const ar=atlT.score??0,or=oppT.score??0;
         completed.push({date:day.date,opp:oppT.team.abbreviation,r:ar>or?'W':'L',
           score:`${ar}-${or}`,isHome,atlRuns:ar,oppRuns:or,venue:g.venue?.name,gameDate:g.gameDate});
+        _lastSchedGame=g; // capture full game object for linescore/decisions
       }else if(state==='Preview'||state==='Scheduled'||state==='Pre-Game'){
         upcoming.push({date:day.date,opp:oppT.team.abbreviation,isHome,venue:g.venue?.name,gameDate:g.gameDate});
       }
@@ -663,14 +707,124 @@ function mergeLiveData(seed,live){
     HEALTH.warn('MLB pitching stats API failed — showing SEED roster');
   }
 
-  // Supplement with ESPN team stats if available
+  // ── ESPN supplemental (log presence) ──
   if(live.espn&&live.espn.team){
     try{
-      const espnTeam=live.espn.team;
-      const stats=espnTeam.seasonStats||espnTeam.record?.items?.[0]?.stats||[];
-      HEALTH.info(`ESPN team data fetched — ${stats.length} stat fields`);
+      const stats=live.espn.team.seasonStats||live.espn.team.record?.items?.[0]?.stats||[];
+      HEALTH.info(`ESPN team data available — ${stats.length} stat fields`);
     }catch(e){HEALTH.warn(`ESPN parse failed: ${e.message}`);}
   }
+
+  // ── Live weather from Open-Meteo (Truist Park, Atlanta) ──
+  if(live.weather?.current){
+    try{
+      const c=live.weather.current;
+      const dl=live.weather.daily;
+      d.weather.temp=Math.round(c.temperature_2m);
+      d.weather.feelsLike=Math.round(c.apparent_temperature);
+      d.weather.humidity=Math.round(c.relative_humidity_2m);
+      d.weather.wind=Math.round(c.wind_speed_10m);
+      d.weather.windDir=_windDir(c.wind_direction_10m);
+      d.weather.rainChance=c.precipitation_probability||0;
+      const wx=_wmoDesc(c.weather_code);
+      d.weather.emoji=wx.emoji;d.weather.condition=wx.condition;
+      if(dl){
+        d.weather.hiTemp=Math.round(dl.temperature_2m_max[0]);
+        d.weather.loTemp=Math.round(dl.temperature_2m_min[0]);
+        d.weather.forecast=(dl.time||[]).slice(0,5).map((dt,i)=>{
+          const dn=i===0?'Today':new Date(dt+'T12:00:00').toLocaleDateString('en-US',{weekday:'short'});
+          const w2=_wmoDesc(dl.weather_code[i]);
+          return{day:dn,hi:Math.round(dl.temperature_2m_max[i]),lo:Math.round(dl.temperature_2m_min[i]),icon:w2.emoji,rain:dl.precipitation_probability_max[i]||0};
+        });
+      }
+      HEALTH.ok(`Live weather: ${d.weather.temp}°F ${d.weather.condition} ${d.weather.rainChance}% rain`);
+    }catch(e){HEALTH.warn(`Weather parse error: ${e.message}`);}
+  }else{HEALTH.warn('Open-Meteo weather fetch failed — showing cached weather');}
+
+  // ── Last game: decisions (WP/LP) + linescore from schedule hydration ──
+  if(_lastSchedGame){
+    if(_lastSchedGame.decisions?.winner?.fullName) d.lastGame.winner=_lastSchedGame.decisions.winner.fullName;
+    if(_lastSchedGame.decisions?.loser?.fullName) d.lastGame.loser=_lastSchedGame.decisions.loser.fullName;
+    if(_lastSchedGame.linescore?.innings?.length){
+      const atlIsHome=d.lastGame.home.abbr==='ATL';
+      const oppAbbr=(atlIsHome?d.lastGame.away.abbr:d.lastGame.home.abbr).toLowerCase();
+      d.lastGame.innings=_lastSchedGame.linescore.innings.map(inn=>{
+        const atlR=atlIsHome?(inn.home?.runs??0):(inn.away?.runs??0);
+        const oppR=atlIsHome?(inn.away?.runs??0):(inn.home?.runs??0);
+        const row={inn:String(inn.num),atl:atlR};
+        row[oppAbbr]=oppR;
+        return row;
+      });
+      // Live H/E totals
+      const ls=_lastSchedGame.linescore.teams;
+      if(ls){
+        const atlObj=atlIsHome?d.lastGame.home:d.lastGame.away;
+        const oppObj=atlIsHome?d.lastGame.away:d.lastGame.home;
+        const atlT=atlIsHome?ls.home:ls.away;
+        const oppT=atlIsHome?ls.away:ls.home;
+        if(atlT){atlObj.hits=atlT.hits??atlObj.hits;atlObj.errors=atlT.errors??atlObj.errors;}
+        if(oppT){oppObj.hits=oppT.hits??oppObj.hits;oppObj.errors=oppT.errors??oppObj.errors;}
+      }
+    }
+    // Build a live recap from decisions + score
+    const atlIsHome2=d.lastGame.home.abbr==='ATL';
+    const atlR2=atlIsHome2?d.lastGame.home.runs:d.lastGame.away.runs;
+    const oppR2=atlIsHome2?d.lastGame.away.runs:d.lastGame.home.runs;
+    const oppAbbr2=atlIsHome2?d.lastGame.away.abbr:d.lastGame.home.abbr;
+    const atlWon=atlR2>oppR2;
+    if(atlWon){
+      d.lastGame.recap=`${d.lastGame.winner} earned the win as Atlanta defeated ${oppAbbr2} ${atlR2}-${oppR2} on ${d.lastGame.date}. Stats updated live from MLB.com every 2 minutes.`;
+    }else{
+      d.lastGame.recap=`${d.lastGame.loser} took the loss as Atlanta fell to ${oppAbbr2} ${oppR2}-${atlR2} on ${d.lastGame.date}. Stats updated live from MLB.com every 2 minutes.`;
+    }
+  }
+
+  // ── Live boxscore: batter & pitcher game lines ──
+  if(live.boxscore?.teams){
+    try{
+      const atlIsHome=d.lastGame.home.abbr==='ATL';
+      const atlTeam=live.boxscore.teams[atlIsHome?'home':'away'];
+      if(atlTeam?.battingOrder?.length){
+        const batters=atlTeam.battingOrder.map(id=>{
+          const p=atlTeam.players['ID'+id];if(!p)return null;
+          const b=p.stats?.batting||{};
+          return{
+            name:p.person.fullName,
+            pos:(p.allPositions||[]).map(x=>x.abbreviation).join('/')||p.position?.abbreviation||'—',
+            ab:b.atBats||0,h:b.hits||0,hr:b.homeRuns||0,rbi:b.rbi||0,r:b.runs||0,
+            note:b.homeRuns>0?'HR 💥':b.rbi>=2?`${b.rbi} RBI 🔥`:b.hits>=3?`${b.hits}H 🔥`:''
+          };
+        }).filter(Boolean);
+        if(batters.length) d.lastGame.atlBatters=batters;
+      }
+      if(atlTeam?.pitchers?.length){
+        const saveP=_lastSchedGame?.decisions?.save?.fullName||'';
+        const pitchers=atlTeam.pitchers.map(id=>{
+          const p=atlTeam.players['ID'+id];if(!p)return null;
+          const pit=p.stats?.pitching||{};
+          const isW=p.person.fullName===d.lastGame.winner;
+          const isSv=p.person.fullName===saveP;
+          return{
+            name:p.person.fullName,
+            role:pit.gamesStarted>0?(isW?'SP (W)':'SP'):isW?'RP (W)':isSv?'RP (SV)':'RP',
+            ip:pit.inningsPitched||'0.0',
+            h:pit.hits||0,er:pit.earnedRuns||0,k:pit.strikeOuts||0,bb:pit.baseOnBalls||0,
+            note:isW?'Win 🔥':isSv?'Save ✅':pit.earnedRuns===0&&parseInt(pit.inningsPitched)>0?'Scoreless':''
+          };
+        }).filter(Boolean);
+        if(pitchers.length) d.lastGame.atlPitchers=pitchers;
+      }
+      // Build key moments from live batter lines
+      const moments=[];
+      for(const b of (d.lastGame.atlBatters||[])){
+        if(b.hr>0) moments.push({inn:'—',icon:'💥',player:b.name,desc:`Home run — ${b.rbi} RBI`,score:''});
+        else if(b.rbi>=3) moments.push({inn:'—',icon:'🔥',player:b.name,desc:`${b.rbi}-RBI performance`,score:''});
+        else if(b.h>=3) moments.push({inn:'—',icon:'⚾',player:b.name,desc:`${b.h}-for-${b.ab} at the plate`,score:''});
+      }
+      if(moments.length) d.lastGame.keyMoments=moments.slice(0,5);
+      HEALTH.ok(`Live boxscore: ${d.lastGame.atlBatters?.length||0} batters, ${d.lastGame.atlPitchers?.length||0} pitchers`);
+    }catch(e){HEALTH.warn(`Boxscore parse error: ${e.message}`);}
+  }else{HEALTH.warn('MLB boxscore fetch failed — showing cached last game');}
 
   return d;
 }
