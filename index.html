@@ -569,13 +569,16 @@ function mergeLiveData(seed,live){
   const d=JSON.parse(JSON.stringify(seed));
   // ── Standings ──
   const allTeams=[];
+  const nlTeams=[];
   for(const div of live.standings.records||[]){
     const isNLE=div.division?.id===NLE_DIV;
+    const isNL=div.league?.id===104;
     const divTeams=[];
     for(const tr of div.teamRecords||[]){
       const abbr=tr.team.abbreviation||tr.team.name.split(' ').pop().slice(0,3).toUpperCase();
       const rec={name:tr.team.name,abbr,w:tr.wins,l:tr.losses};
       allTeams.push(rec);
+      if(isNL) nlTeams.push(rec);
       if(isNLE) divTeams.push(rec);
       if(tr.team.id===ATL_ID){
         d.record.w=tr.wins; d.record.l=tr.losses;
@@ -601,6 +604,14 @@ function mergeLiveData(seed,live){
   }
   if(allTeams.length){
     d.mlbTop=[...allTeams].sort((a,b)=>(b.w/(b.w+b.l))-(a.w/(a.w+a.l))).slice(0,8);
+  }
+  // ── Live rankings (drive dynamic NL East / NL win-% subtitles) ──
+  const nleIdx=(d.nle||[]).findIndex(t=>t.abbr==='ATL');
+  d.record.nleRank=nleIdx>=0?nleIdx+1:null;
+  if(nlTeams.length){
+    nlTeams.sort((a,b)=>(b.w/(b.w+b.l))-(a.w/(a.w+a.l)));
+    const nlIdx=nlTeams.findIndex(t=>t.abbr==='ATL');
+    d.record.nlRank=nlIdx>=0?nlIdx+1:null;
   }
   // ── Schedule ──
   const completed=[],upcoming=[];
@@ -851,7 +862,7 @@ async function refreshAll(){
   const [liveResult]=await Promise.allSettled([
     fetchLiveData(),
     fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:[{role:'user',content:(()=>{const d=DATA||SEED;const tb=d.batters.length?d.batters.reduce((a,b)=>b.ops>a.ops?b:a):null;const sp=d.pitchers.filter(p=>p.pos==='SP');const tp=sp.length?sp.reduce((a,b)=>b.era<a.era?b:a):null;return`Hot take: 2026 Braves are ${d.record.w}-${d.record.l}, 1st NL East. Top batter: ${tb?tb.name+' '+tb.ops.toFixed(3)+' OPS':'—'}. Ace: ${tp?tp.name+' '+tp.era.toFixed(2)+' ERA':'—'}. Last 3: ${(d.lastGame?.recentResults||[]).slice(-3).map(r=>`${r.r} vs ${r.opp} ${r.score}`).join(', ')||'recent W'}. Two punchy analyst sentences. No markdown.`})()}]})})
+      body:JSON.stringify({messages:[{role:'user',content:(()=>{const d=DATA||SEED;const tb=d.batters.length?d.batters.reduce((a,b)=>b.ops>a.ops?b:a):null;const sp=d.pitchers.filter(p=>p.pos==='SP');const tp=sp.length?sp.reduce((a,b)=>b.era<a.era?b:a):null;const _ord=n=>n==null?'1st':(['1st','2nd','3rd','4th','5th'][n-1]||`${n}th`);return`Hot take: 2026 Braves are ${d.record.w}-${d.record.l}, ${_ord(d.record.nleRank)} NL East. Top batter: ${tb?tb.name+' '+tb.ops.toFixed(3)+' OPS':'—'}. Ace: ${tp?tp.name+' '+tp.era.toFixed(2)+' ERA':'—'}. Last 3: ${(d.lastGame?.recentResults||[]).slice(-3).map(r=>`${r.r} vs ${r.opp} ${r.score}`).join(', ')||'recent W'}. Two punchy analyst sentences. No markdown.`})()}]})})
       .then(r=>r.json()).then(r=>{
         if(r.text){aiInsightCache=r.text;const el=document.querySelector('.ait');if(el)el.textContent=r.text;}
       })
@@ -862,7 +873,8 @@ async function refreshAll(){
     const el=document.querySelector('.ait');
     if(el&&el.querySelector('.spin')){
       const d=DATA||SEED;
-      const fb=`Braves sit ${d.record.w}-${d.record.l} atop the NL East — elite pitching and a red-hot lineup make them the class of the division. The Chop is very much alive in 2026.`;
+      const _ord=n=>n==null?'atop':(n===1?'atop':`${(['1st','2nd','3rd','4th','5th'][n-1]||n+'th')} in`);
+      const fb=`Braves sit ${d.record.w}-${d.record.l}, ${_ord(d.record.nleRank)} the NL East — elite pitching and a red-hot lineup keep them in the mix. The Chop is very much alive in 2026.`;
       el.textContent=fb; aiInsightCache=fb;
       HEALTH.fix('AI insight timed out — showing static fallback');
     }
@@ -921,6 +933,20 @@ function renderOverview(d){
   const tp=spList.length?spList.reduce((a,b)=>b.era<a.era?b:a):(d.pitchers.length?d.pitchers[0]:null);
   if(!tb)HEALTH.warn('No batting data available for overview — batter card hidden');
   if(!tp)HEALTH.warn('No pitching data available for overview — pitcher card hidden');
+  // Dynamic subtitles — driven by live standings rankings
+  const ord=n=>n==null?'':(['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th'][n-1]||`${n}th`);
+  const nleSub=d.record.nleRank?`${ord(d.record.nleRank)} NL East`:'NL East';
+  const nlSub=d.record.nlRank===1?'Best in NL':d.record.nlRank?`${ord(d.record.nlRank)} in NL`:'NL Win %';
+  const recColor=d.record.nleRank===1?'var(--green)':d.record.nleRank===2?'var(--yellow)':'var(--crimson)';
+  const wpctColor=d.record.nlRank===1?'var(--green)':d.record.nlRank<=4?'var(--yellow)':'var(--crimson)';
+  const homePct=(()=>{const[hw,hl]=String(d.record.home||'0-0').split('-').map(Number);return(hw+hl)?hw/(hw+hl):0;})();
+  const awayPct=(()=>{const[aw,al]=String(d.record.away||'0-0').split('-').map(Number);return(aw+al)?aw/(aw+al):0;})();
+  const l10Pct=(()=>{const[lw,ll]=String(d.record.last10||'0-0').split('-').map(Number);return(lw+ll)?lw/(lw+ll):0;})();
+  const homeColor=homePct>=0.55?'var(--green)':homePct>=0.45?'var(--yellow)':'var(--crimson)';
+  const awayColor=awayPct>=0.55?'var(--green)':awayPct>=0.45?'var(--yellow)':'var(--crimson)';
+  const l10Color=l10Pct>=0.6?'var(--green)':l10Pct>=0.4?'var(--yellow)':'var(--crimson)';
+  const rdNum=parseFloat(String(d.record.runDiff).replace('+',''))||0;
+  const rdColor=rdNum>0?'var(--green)':rdNum<0?'var(--crimson)':'var(--yellow)';
   document.getElementById('content').innerHTML=`
     <div class="aic">
       <div class="ail">⚡ AI ANALYST TAKE</div>
@@ -929,12 +955,12 @@ function renderOverview(d){
     <div class="card">
       <div class="ct" style="color:var(--green)">📈 SEASON AT A GLANCE</div>
       <div class="sg">
-        <div class="sb"><div class="sl">RECORD</div><div class="sv" style="color:var(--green)">${d.record.w}-${d.record.l}</div><div class="ss">1st NL East</div></div>
-        <div class="sb"><div class="sl">WIN %</div><div class="sv" style="color:var(--green)">${d.record.pct}</div><div class="ss">Best in NL</div></div>
-        <div class="sb"><div class="sl">HOME</div><div class="sv" style="color:var(--green)">${d.record.home}</div><div class="ss">Truist Park</div></div>
-        <div class="sb"><div class="sl">AWAY</div><div class="sv" style="color:var(--yellow)">${d.record.away}</div><div class="ss">On the Road</div></div>
-        <div class="sb"><div class="sl">LAST 10</div><div class="sv" style="color:var(--yellow)">${d.record.last10}</div><div class="ss">Recent Form</div></div>
-        <div class="sb"><div class="sl">RUN +/-</div><div class="sv" style="color:var(--green)">${d.record.runDiff}</div><div class="ss">Differential</div></div>
+        <div class="sb"><div class="sl">RECORD</div><div class="sv" style="color:${recColor}">${d.record.w}-${d.record.l}</div><div class="ss">${nleSub}</div></div>
+        <div class="sb"><div class="sl">WIN %</div><div class="sv" style="color:${wpctColor}">${d.record.pct}</div><div class="ss">${nlSub}</div></div>
+        <div class="sb"><div class="sl">HOME</div><div class="sv" style="color:${homeColor}">${d.record.home}</div><div class="ss">Truist Park</div></div>
+        <div class="sb"><div class="sl">AWAY</div><div class="sv" style="color:${awayColor}">${d.record.away}</div><div class="ss">On the Road</div></div>
+        <div class="sb"><div class="sl">LAST 10</div><div class="sv" style="color:${l10Color}">${d.record.last10}</div><div class="ss">Recent Form</div></div>
+        <div class="sb"><div class="sl">RUN +/-</div><div class="sv" style="color:${rdColor}">${d.record.runDiff}</div><div class="ss">Differential</div></div>
       </div>
     </div>
     ${tb?`<div class="ph bat">
@@ -1150,7 +1176,7 @@ async function cbSend(override){
     const _tb=_cd.batters.length?_cd.batters.reduce((a,b)=>b.ops>a.ops?b:a):null;
     const _sp=_cd.pitchers.filter(p=>p.pos==='SP');
     const _tp=_sp.length?_sp.reduce((a,b)=>b.era<a.era?b:a):null;
-    const systemContext=`Braves are ${_cd.record.w}-${_cd.record.l} (${_cd.record.pct}), 1st NL East. Last 10: ${_cd.record.last10}. Run diff: ${_cd.record.runDiff}. Top batter: ${_tb?_tb.name+' '+_tb.ops.toFixed(3)+' OPS':'-'}. Ace: ${_tp?_tp.name+' '+_tp.era.toFixed(2)+' ERA':'-'}. Stats source: ${_cd._liveSource?'MLB Live API':'seed data'}.`;
+    const _ord=n=>n==null?'1st':(['1st','2nd','3rd','4th','5th'][n-1]||`${n}th`);const systemContext=`Braves are ${_cd.record.w}-${_cd.record.l} (${_cd.record.pct}), ${_ord(_cd.record.nleRank)} NL East. Last 10: ${_cd.record.last10}. Run diff: ${_cd.record.runDiff}. Top batter: ${_tb?_tb.name+' '+_tb.ops.toFixed(3)+' OPS':'-'}. Ace: ${_tp?_tp.name+' '+_tp.era.toFixed(2)+' ERA':'-'}. Stats source: ${_cd._liveSource?'MLB Live API':'seed data'}.`;
     const res=await fetch('/api/chat',{method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({messages:cbApiHist,systemContext})});
@@ -1601,7 +1627,8 @@ setInterval(()=>{
   const ait=document.querySelector('.ait');
   if(ait&&ait.querySelector('.spin')&&(Date.now()-lastRenderTime)>15000){
     const d=DATA||SEED;
-    const fb=`Braves sit ${d.record.w}-${d.record.l} atop the NL East — elite pitching and a loaded lineup make them the class of the division. The Chop is very much alive in 2026.`;
+    const _ord=n=>n==null?'atop':(n===1?'atop':`${(['1st','2nd','3rd','4th','5th'][n-1]||n+'th')} in`);
+    const fb=`Braves sit ${d.record.w}-${d.record.l}, ${_ord(d.record.nleRank)} the NL East — elite pitching and a loaded lineup keep them in the mix. The Chop is very much alive in 2026.`;
     ait.textContent=fb; aiInsightCache=fb;
     HEALTH.fix('AI insight stuck on spinner — replaced with static fallback');
   }
