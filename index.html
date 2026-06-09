@@ -293,8 +293,10 @@
 </div>
 
 <script>
-const MLB_BAT={avg:.248,obp:.318,slg:.413,ops:.731,hr:14,rbi:52,sb:8};
-const MLB_PIT={era:4.20,whip:1.28,k9:8.8,bb9:3.2,fip:4.15};
+// MLB league averages — preseason 2026 defaults, overwritten live every 2 min
+// from the MLB team-wide stats endpoint (all 30 teams aggregated).
+const MLB_BAT={avg:.248,obp:.318,slg:.413,ops:.731,hr:14,rbi:52,sb:8,_live:false};
+const MLB_PIT={era:4.20,whip:1.28,k9:8.8,bb9:3.2,fip:4.15,_live:false};
 let DATA=null, currentTab='overview', refreshTimer=null, aiInsightCache='', lastRenderTime=0, aiInsightTimer=null;
 
 // ── HEALTH MONITOR ──
@@ -508,7 +510,7 @@ async function fetchLiveData(){
   const LAT=33.891, LON=-84.468;
 
   // First parallel wave: primary data sources
-  const [sr,gr,br,pr,rr,er,wr,ssr]=await Promise.all([
+  const [sr,gr,br,pr,rr,er,wr,ssr,lbr,lpr]=await Promise.all([
     HEALTH.safeFetch(`${base}/standings?leagueId=103,104&season=${season}&standingsTypes=regularSeason&hydrate=team,records`),
     HEALTH.safeFetch(`${base}/schedule?sportId=1&teamId=${ATL_ID}&startDate=${start}&endDate=${end}&hydrate=linescore,team,decisions`),
     HEALTH.safeFetch(`${base}/stats?stats=season&group=hitting&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=60&sportId=1&gameType=R`).catch(()=>null),
@@ -516,7 +518,9 @@ async function fetchLiveData(){
     HEALTH.safeFetch(`${base}/teams/${ATL_ID}/roster?rosterType=active&season=${season}`).catch(()=>null),
     HEALTH.safeFetch(`${espnBase}/teams/15?enable=roster,stats`).catch(()=>null),
     HEALTH.safeFetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=5&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,uv_index_max&timezone=auto`).catch(()=>null),
-    HEALTH.safeFetch(`${base}/schedule?sportId=1&teamId=${ATL_ID}&startDate=${seasonStart}&endDate=${seasonEnd}&gameType=R`).catch(()=>null)
+    HEALTH.safeFetch(`${base}/schedule?sportId=1&teamId=${ATL_ID}&startDate=${seasonStart}&endDate=${seasonEnd}&gameType=R`).catch(()=>null),
+    HEALTH.safeFetch(`${base}/teams/stats?sportId=1&stats=season&season=${season}&group=hitting&gameType=R`).catch(()=>null),
+    HEALTH.safeFetch(`${base}/teams/stats?sportId=1&stats=season&season=${season}&group=pitching&gameType=R`).catch(()=>null)
   ]);
 
   // Parse schedule early so we can find last game ID for boxscore fetch
@@ -529,7 +533,7 @@ async function fetchLiveData(){
   }
 
   // Second parallel wave: remaining JSON + boxscore for last game
-  const [standingsJ,battingJ,pitchingJ,rosterJ,espnJ,weatherJ,seasonScheduleJ,boxscoreJ]=await Promise.all([
+  const [standingsJ,battingJ,pitchingJ,rosterJ,espnJ,weatherJ,seasonScheduleJ,leagueBatJ,leaguePitJ,boxscoreJ]=await Promise.all([
     sr.json(),
     br?br.json():Promise.resolve(null),
     pr?pr.json():Promise.resolve(null),
@@ -537,6 +541,8 @@ async function fetchLiveData(){
     er?er.json().catch(()=>null):Promise.resolve(null),
     wr?wr.json().catch(()=>null):Promise.resolve(null),
     ssr?ssr.json().catch(()=>null):Promise.resolve(null),
+    lbr?lbr.json().catch(()=>null):Promise.resolve(null),
+    lpr?lpr.json().catch(()=>null):Promise.resolve(null),
     lastGamePk?HEALTH.safeFetch(`${base}/game/${lastGamePk}/boxscore`).then(r=>r.json()).catch(()=>null):Promise.resolve(null)
   ]);
 
@@ -549,6 +555,8 @@ async function fetchLiveData(){
     espn:espnJ,
     weather:weatherJ,
     seasonSchedule:seasonScheduleJ,
+    leagueBatting:leagueBatJ,
+    leaguePitching:leaguePitJ,
     boxscore:boxscoreJ
   };
 }
@@ -610,6 +618,64 @@ function mergeLiveData(seed,live){
     nlTeams.sort((a,b)=>(b.w/(b.w+b.l))-(a.w/(a.w+a.l)));
     const nlIdx=nlTeams.findIndex(t=>t.abbr==='ATL');
     d.record.nlRank=nlIdx>=0?nlIdx+1:null;
+  }
+
+  // ── Live MLB league averages — every reference line / threshold reads MLB_BAT/PIT ──
+  // Aggregate all 30 teams' totals (true rate stats) and per-team averages (for HR/RBI/SB).
+  if(live.leagueBatting){
+    const splits=(live.leagueBatting.stats||[]).flatMap(g=>g.splits||[]);
+    if(splits.length){
+      let H=0,AB=0,BB=0,HBP=0,SF=0,TB=0;
+      for(const s of splits){
+        const st=s.stat||{};
+        H+=+st.hits||0; AB+=+st.atBats||0; BB+=+st.baseOnBalls||0;
+        HBP+=+st.hitByPitch||0; SF+=+st.sacFlies||0;
+        TB+=+st.totalBases||0;
+      }
+      if(AB>0){
+        const avg=H/AB;
+        const obp=(H+BB+HBP)/(AB+BB+HBP+SF);
+        const slg=TB/AB;
+        MLB_BAT.avg=+avg.toFixed(3);
+        MLB_BAT.obp=+obp.toFixed(3);
+        MLB_BAT.slg=+slg.toFixed(3);
+        MLB_BAT.ops=+(obp+slg).toFixed(3);
+        MLB_BAT._live=true;
+      }
+      // HR/RBI/SB stay at seed values — those represent "top-player thresholds"
+      // for individual color coding, not league averages, so per-team aggregation
+      // would dwarf individual totals.
+    }
+  }
+  if(live.leaguePitching){
+    const splits=(live.leaguePitching.stats||[]).flatMap(g=>g.splits||[]);
+    if(splits.length){
+      let ER=0,ipDec=0,H=0,BB=0,HBP=0,K=0,HR=0;
+      for(const s of splits){
+        const st=s.stat||{};
+        ER+=+st.earnedRuns||0; H+=+st.hits||0;
+        BB+=+st.baseOnBalls||0; HBP+=+st.hitByPitch||0;
+        K+=+st.strikeOuts||0; HR+=+st.homeRuns||0;
+        const ip=String(st.inningsPitched||'0').split('.');
+        ipDec+=(parseInt(ip[0]||'0'))+(parseInt(ip[1]||'0')/3);
+      }
+      if(ipDec>0){
+        const era=(ER*9)/ipDec;
+        const whip=(H+BB)/ipDec;
+        const k9=(K*9)/ipDec;
+        const bb9=(BB*9)/ipDec;
+        // FIP constant: solve so league FIP = league ERA → C = ERA - (13HR+3(BB+HBP)-2K)/IP
+        const fipNoC=(13*HR+3*(BB+HBP)-2*K)/ipDec;
+        const FIP_C=+(era-fipNoC).toFixed(2);
+        MLB_PIT.era=+era.toFixed(2);
+        MLB_PIT.whip=+whip.toFixed(2);
+        MLB_PIT.k9=+k9.toFixed(1);
+        MLB_PIT.bb9=+bb9.toFixed(1);
+        MLB_PIT.fip=+era.toFixed(2); // by construction league FIP == league ERA
+        MLB_PIT._fipC=FIP_C;
+        MLB_PIT._live=true;
+      }
+    }
   }
   // ── Schedule ──
   const completed=[],upcoming=[];
@@ -702,7 +768,8 @@ function mergeLiveData(seed,live){
   if(live.pitching){
     const splits=[...(live.pitching.stats||[])].flatMap(s=>s.splits||[]);
     HEALTH.info(`MLB pitching API: ${splits.length} pitcher splits returned`);
-    const FIP_C=3.15;
+    // Use live league-derived FIP constant when available; falls back to 2026 default.
+    const FIP_C=(typeof MLB_PIT._fipC==='number')?MLB_PIT._fipC:3.15;
     const pitchers=splits
       .filter(s=>{
         const ip=String(s.stat.inningsPitched||'0');
@@ -1054,12 +1121,12 @@ function renderStats(d){
     <div class="leg"><span><span class="dot" style="background:var(--green)"></span>Above MLB Avg</span><span><span class="dot" style="background:var(--yellow)"></span>Near Avg</span><span><span class="dot" style="background:var(--crimson)"></span>Below Avg</span></div>
     <div class="card">
       <div class="ct" style="color:var(--green)">🏏 BATTING</div>
-      <div style="font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:8px">MLB AVG → .248 / .318 OBP / .731 OPS</div>
+      <div style="font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:8px">MLB AVG → ${MLB_BAT.avg.toFixed(3)} / ${MLB_BAT.obp.toFixed(3)} OBP / ${MLB_BAT.ops.toFixed(3)} OPS ${MLB_BAT._live?'<span style="color:var(--green)">● LIVE</span>':''}</div>
       <div class="plist">${d.batters.map(b=>`<div class="prow"><div class="ptop"><div class="prn">${b.name}</div><span class="prp bat">${b.pos}</span></div><div class="prstats"><div class="pri"><div class="pril">AVG</div>${badge(b.avg,MLB_BAT.avg,false,v=>v.toFixed(3))}</div><div class="pri"><div class="pril">OPS</div>${badge(b.ops,MLB_BAT.ops,false,v=>v.toFixed(3))}</div><div class="pri"><div class="pril">OBP</div>${badge(b.obp,MLB_BAT.obp,false,v=>v.toFixed(3))}</div><div class="pri"><div class="pril">SLG</div>${badge(b.slg,MLB_BAT.slg,false,v=>v.toFixed(3))}</div><div class="pri"><div class="pril">HR</div>${badge(b.hr,MLB_BAT.hr,false,v=>v)}</div><div class="pri"><div class="pril">RBI</div>${badge(b.rbi,MLB_BAT.rbi,false,v=>v)}</div><div class="pri"><div class="pril">SB</div>${badge(b.sb,MLB_BAT.sb,false,v=>v)}</div></div></div>`).join('')}</div>
     </div>
     <div class="card">
       <div class="ct" style="color:var(--red)">⚾ PITCHING</div>
-      <div style="font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:8px">MLB AVG → 4.20 ERA / 1.28 WHIP / 8.8 K/9</div>
+      <div style="font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:8px">MLB AVG → ${MLB_PIT.era.toFixed(2)} ERA / ${MLB_PIT.whip.toFixed(2)} WHIP / ${MLB_PIT.k9.toFixed(1)} K/9 ${MLB_PIT._live?'<span style="color:var(--green)">● LIVE</span>':''}</div>
       <div class="plist">${d.pitchers.map(p=>`<div class="prow"><div class="ptop"><div class="prn">${p.name}</div><span class="prp ${p.pos.toLowerCase()}">${p.pos}</span></div><div class="prstats"><div class="pri"><div class="pril">ERA</div>${badge(p.era,MLB_PIT.era,true,v=>v.toFixed(2))}</div><div class="pri"><div class="pril">WHIP</div>${badge(p.whip,MLB_PIT.whip,true,v=>v.toFixed(2))}</div><div class="pri"><div class="pril">K/9</div>${badge(p.k9,MLB_PIT.k9,false,v=>v.toFixed(1))}</div><div class="pri"><div class="pril">BB/9</div>${badge(p.bb9,MLB_PIT.bb9,true,v=>v.toFixed(1))}</div><div class="pri"><div class="pril">FIP</div>${badge(p.fip,MLB_PIT.fip,true,v=>v.toFixed(2))}</div><div class="pri"><div class="pril">${p.pos==='RP'?'SV':'W'}</div><span class="badge bg">${p.pos==='RP'?p.sv:p.w}</span></div></div></div>`).join('')}</div>
     </div>`;
 }
