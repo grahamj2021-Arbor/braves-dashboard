@@ -174,74 +174,6 @@
     .loading-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px 20px;text-align:center}
     .loading-overlay .big-spin{width:40px;height:40px;border:3px solid #22c55e22;border-top-color:var(--green);border-radius:50%;animation:spin 1s linear infinite}
     .loading-msg{font-size:13px;color:var(--muted)}
-    /* CHOP BOT */
-    .cb-hero{display:flex;flex-direction:column;align-items:center;padding:8px 0 4px;position:relative}
-    .cb-glow{position:absolute;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(206,17,65,.12) 0%,rgba(0,43,92,.1) 45%,transparent 70%);top:0;left:50%;transform:translateX(-50%);pointer-events:none}
-    .cb-name{font-family:'Anton',sans-serif;font-size:26px;color:var(--green);letter-spacing:3px;text-shadow:0 0 14px rgba(34,197,94,.4);margin-top:4px}
-    .cb-status-bar{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);margin-bottom:10px;letter-spacing:1px}
-    .cb-sdot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite;flex-shrink:0}
-    /* Character base */
-    #cb-bot{animation:cb-float 3.2s ease-in-out infinite;display:block}
-    #cb-bot.talking{animation:cb-talkbob .28s ease-in-out infinite}
-    #cb-bot.happy{animation:cb-bounce .6s ease-in-out 2}
-    #cb-bot.happy #cb-teeth{opacity:.8!important}
-    #cb-bot.thinking #cb-brow-l,#cb-bot.thinking #cb-brow-r{animation:cb-browup .9s ease-in-out infinite}
-    #cb-bot.thinking .cb-pupil{animation:cb-think .9s ease-in-out infinite}
-    .cb-lid{transform:scaleY(0);transform-box:fill-box;transform-origin:center;transition:transform .08s}
-    #cb-bot.blink .cb-lid{transform:scaleY(1)}
-    .cb-pupil{transform-box:fill-box;transform-origin:center}
-    /* Base keyframes */
-    @keyframes cb-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-    @keyframes cb-talkbob{0%,100%{transform:translateY(0) rotate(-1.2deg)}50%{transform:translateY(-4px) rotate(1.2deg)}}
-    @keyframes cb-bounce{0%,100%{transform:translateY(0) scale(1)}25%{transform:translateY(-22px) scale(1.04,.96)}55%{transform:translateY(-9px) scale(.98,1.02)}75%{transform:translateY(-16px) scale(1.02)}}
-    @keyframes cb-browup{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-    @keyframes cb-think{0%,100%{transform:translate(0,0)}50%{transform:translate(-5px,-3px)}}
-    /* SCORE PREDICTOR */
-    .pred-card{background:linear-gradient(135deg,#0d1a0f,#0a1628);border:1px solid #22c55e44;border-radius:14px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden}
-    .pred-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--green),var(--red))}
-    .pred-pickers{display:flex;justify-content:center;align-items:flex-start;gap:28px;margin-bottom:18px}
-    .pred-team{display:flex;flex-direction:column;align-items:center;gap:6px}
-    .pred-team-lbl{font-size:10px;color:var(--muted);letter-spacing:2px;font-weight:700}
-    .pred-adj{width:52px;height:40px;border:1px solid var(--border);border-radius:8px;background:#0a1410;color:var(--text);font-size:20px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .1s;display:flex;align-items:center;justify-content:center}
-    .pred-adj:active{background:var(--navy)}
-    .pred-num{font-family:'Anton',sans-serif;font-size:56px;color:#fff;line-height:1;width:72px;text-align:center}
-    .pred-lock-btn{width:100%;padding:16px;border:none;border-radius:12px;background:var(--red);color:#fff;font-family:'Anton',sans-serif;font-size:20px;letter-spacing:2px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s}
-    .pred-lock-btn:active{transform:scale(.97)}
-    .pred-locked{background:#0a1410;border:1px solid #22c55e55;border-radius:10px;padding:12px 14px;text-align:center;font-size:14px;color:var(--green)}
-    .pred-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
-    .pred-row:last-child{border-bottom:none}
-    .pred-badge{padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700}
-    .pred-badge.exact{background:#22c55e22;color:var(--green);border:1px solid #22c55e55}
-    .pred-badge.close{background:#facc1522;color:var(--yellow);border:1px solid #facc1555}
-    .pred-badge.winner{background:#38bdf822;color:var(--blue);border:1px solid #38bdf855}
-    .pred-badge.miss{background:#ef444422;color:var(--crimson);border:1px solid #ef444455}
-    .pred-badge.pending{background:#1e3a2622;color:var(--dim);border:1px solid var(--border)}
-    /* Suggestions */
-    .csugg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-    .csugg-btn{background:#0a1410;border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:11px;color:var(--muted);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;font-family:'DM Sans',sans-serif;white-space:nowrap}
-    .csugg-btn:active{background:var(--navy);color:var(--text);border-color:var(--blue)}
-    /* Chat */
-    .chat-area{background:var(--card);border:1px solid var(--border);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
-    .chat-msgs{overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:14px 12px;min-height:180px;max-height:340px;-webkit-overflow-scrolling:touch}
-    .chat-msgs::-webkit-scrollbar{display:none}
-    .cmsg{display:flex;gap:8px;align-items:flex-end;max-width:88%}
-    .cmsg.user{align-self:flex-end;flex-direction:row-reverse}
-    .cmsg.bot{align-self:flex-start}
-    .cbubble{padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.6;word-break:break-word}
-    .cmsg.user .cbubble{background:var(--red);color:#fff;border-bottom-right-radius:4px}
-    .cmsg.bot .cbubble{background:#0d1a14;border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px}
-    .cavy{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--red));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
-    .ctyping{display:flex;gap:4px;align-items:center;padding:2px 0}
-    .ctyping span{width:7px;height:7px;border-radius:50%;background:var(--green);animation:ctype 1s ease-in-out infinite}
-    .ctyping span:nth-child(2){animation-delay:.2s}
-    .ctyping span:nth-child(3){animation-delay:.4s}
-    @keyframes ctype{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
-    .chat-irow{border-top:1px solid var(--border);padding:10px 12px;display:flex;gap:8px;background:#0a1410}
-    .cinput{flex:1;background:#0d1a0f;border:1px solid var(--border);border-radius:12px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;resize:none;line-height:1.3;min-height:44px;max-height:88px}
-    .cinput:focus{border-color:#22c55e55}
-    .csend{width:44px;height:44px;border:none;border-radius:12px;background:var(--red);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:transform .1s,opacity .1s}
-    .csend:active{transform:scale(.9)}
-    .csend:disabled{opacity:.35;cursor:not-allowed}
     /* HEALTH MONITOR */
     #health-dot{width:9px;height:9px;border-radius:50%;transition:all .3s;cursor:pointer;flex-shrink:0;margin-left:auto}
     #health-dot.green{background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,.6)}
@@ -265,6 +197,58 @@
     .h-em{font-size:12px;line-height:1.5;flex:1}
     .h-et{font-size:9px;color:var(--dim);font-family:'JetBrains Mono',monospace;margin-top:2px}
     .h-empty{text-align:center;color:var(--dim);padding:24px;font-size:13px}
+    /* CHARTS */
+    .chart-card{padding:14px}
+    .chart-card svg{display:block;width:100%;height:auto}
+    .chart-card text{font-family:'JetBrains Mono',monospace}
+    @media (min-width:900px){
+      #content[data-tab="trends"]{grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
+    }
+    /* PLAYER CARDS — original design, MLB headshots, click-to-flip */
+    .cards-intro{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px}
+    .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:22px;margin-bottom:6px}
+    @media (min-width:900px){.cards-grid{grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:28px}}
+    @media (min-width:1280px){.cards-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:30px}}
+    @media all and (display-mode:standalone){.cards-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}
+    @media (min-width:900px){
+      #content[data-tab="cards"]{grid-template-columns:1fr}
+    }
+    .pcard{position:relative;aspect-ratio:5/7;min-height:238px;perspective:1400px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    @media (min-width:900px){.pcard{min-height:287px}}
+    .pcard-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .6s cubic-bezier(.4,.2,.2,1)}
+    .pcard.flipped .pcard-inner{transform:rotateY(180deg)}
+    .pcard-face,.pcard-back{position:absolute;inset:0;border-radius:14px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 6px 20px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.05)}
+    .pcard-face{background:linear-gradient(165deg,#0a1d3d 0%,#002B5C 40%,#0a1628 100%);border:3px solid var(--red)}
+    .pcard-back{background:linear-gradient(165deg,#0a1d3d 0%,#0d1a0f 50%,#091209 100%);border:3px solid var(--green);transform:rotateY(180deg)}
+    .pcard-face::before,.pcard-back::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,var(--red),var(--navy),var(--red));z-index:1}
+    .pcard-strip{padding:10px 12px 6px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(206,17,65,.85),rgba(206,17,65,.0));position:relative;z-index:2}
+    .pcard-team{font-family:'Anton',sans-serif;font-size:11px;letter-spacing:2px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+    .pcard-jersey{font-family:'Anton',sans-serif;font-size:20px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);line-height:1}
+    .pcard-photo{flex:1;background:radial-gradient(circle at 50% 35%,#1d3a6a 0%,#0a1d3d 55%,#000 100%);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;position:relative;min-height:0}
+    .pcard-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 50%,rgba(0,0,0,.55));pointer-events:none}
+    .pcard-photo img{width:100%;height:100%;object-fit:cover;object-position:center 22%;display:block}
+    .pcard-photo.no-photo::before{content:'⚾';font-size:54px;opacity:.35;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+    .pcard-name-block{background:linear-gradient(0deg,rgba(0,0,0,.94),rgba(0,0,0,.6) 70%,transparent);padding:18px 12px 12px;position:relative;z-index:2;display:flex;flex-direction:column;gap:5px;align-items:flex-start}
+    .pcard-pos-badge{font-family:'Anton',sans-serif;font-size:11px;letter-spacing:2px;color:#fff;padding:3px 9px;border-radius:5px;line-height:1.2}
+    .pcard-name{font-family:'Anton',sans-serif;font-size:19px;color:#fff;line-height:1.05;text-shadow:0 1px 3px rgba(0,0,0,.85);letter-spacing:.5px}
+    @media (min-width:900px){.pcard-name{font-size:22px}.pcard-team{font-size:12px}.pcard-jersey{font-size:24px}.pcard-pos-badge{font-size:12px}}
+    .pcard-flip-hint-front{position:absolute;top:10px;right:12px;font-size:18px;opacity:.7;z-index:3;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+    .pcard-back-strip{padding:12px 14px 10px;background:linear-gradient(180deg,rgba(34,197,94,.25),transparent);position:relative;z-index:2;border-bottom:1px solid rgba(34,197,94,.2)}
+    .pcard-back-name{font-family:'Anton',sans-serif;font-size:16px;color:#fff;letter-spacing:.5px;line-height:1.1}
+    .pcard-back-meta{font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-top:3px}
+    .pcard-back-scroll{flex:1;overflow-y:auto;padding:10px 14px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#22c55e44 transparent;min-height:0}
+    .pcard-back-scroll::-webkit-scrollbar{width:5px}
+    .pcard-back-scroll::-webkit-scrollbar-thumb{background:#22c55e55;border-radius:3px}
+    .pcard-back-scroll::-webkit-scrollbar-track{background:transparent}
+    .pcard-stat-section{font-size:9px;color:var(--green);letter-spacing:1.8px;font-weight:700;margin:8px 0 5px;text-transform:uppercase;opacity:.9}
+    .pcard-stat-section:first-child{margin-top:0}
+    .pcard-stat-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;padding:5px 0;border-bottom:1px solid rgba(34,197,94,.1);font-size:12px;align-items:baseline}
+    .pcard-stat-row:last-child{border-bottom:none}
+    .pcard-stat-l{font-size:10px;color:var(--dim);letter-spacing:1.2px;font-weight:700;text-transform:uppercase}
+    .pcard-stat-v{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px}
+    .pcard-stat-avg{font-size:9px;color:var(--dim);font-family:'JetBrains Mono',monospace}
+    .pcard-flip-hint{font-size:9px;color:var(--dim);text-align:center;padding:6px 0 8px;letter-spacing:1.5px;border-top:1px solid rgba(34,197,94,.1)}
+    .pcard-live-pulse{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite;margin-right:5px;vertical-align:middle}
   </style>
 </head>
 <body>
@@ -300,12 +284,10 @@
   <nav class="bnav">
     <div class="bnav-inner">
       <button class="nbtn active" onclick="showTab('overview',this)"><span class="ni">🏠</span><span class="nl">Home</span></button>
+      <button class="nbtn" onclick="showTab('cards',this)"><span class="ni">🎴</span><span class="nl">Cards</span></button>
+      <button class="nbtn" onclick="showTab('trends',this)"><span class="ni">📉</span><span class="nl">Trends</span></button>
       <button class="nbtn" onclick="showTab('stats',this)"><span class="ni">📈</span><span class="nl">Stats</span></button>
-      <button class="nbtn" onclick="showTab('standings',this)"><span class="ni">📊</span><span class="nl">Stands</span></button>
-      <button class="nbtn" onclick="showTab('highlights',this)"><span class="ni">🎬</span><span class="nl">Game</span></button>
-      <button class="nbtn" onclick="showTab('series',this)"><span class="ni">⚾</span><span class="nl">Series</span></button>
-      <button class="nbtn" onclick="showTab('predictor',this)"><span class="ni">🎯</span><span class="nl">Predict</span></button>
-      <button class="nbtn" onclick="showTab('chopbot',this)"><span class="ni">🤖</span><span class="nl">Bot</span></button>
+      <button class="nbtn" onclick="showTab('standings',this)"><span class="ni">📊</span><span class="nl">Standings</span></button>
     </div>
   </nav>
 </div>
@@ -517,20 +499,24 @@ async function fetchLiveData(){
   const today=new Date();
   const start=_fmtDate(new Date(+today-14*864e5));
   const end=_fmtDate(new Date(+today+7*864e5));
+  // Season-wide schedule for the Trends trajectory charts
+  const seasonStart=`${season}-03-15`;
+  const seasonEnd=`${season}-10-15`;
   const base=`https://statsapi.mlb.com/api/v1`;
   const espnBase=`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb`;
   // Truist Park, Atlanta
   const LAT=33.891, LON=-84.468;
 
   // First parallel wave: primary data sources
-  const [sr,gr,br,pr,rr,er,wr]=await Promise.all([
+  const [sr,gr,br,pr,rr,er,wr,ssr]=await Promise.all([
     HEALTH.safeFetch(`${base}/standings?leagueId=103,104&season=${season}&standingsTypes=regularSeason&hydrate=team,records`),
     HEALTH.safeFetch(`${base}/schedule?sportId=1&teamId=${ATL_ID}&startDate=${start}&endDate=${end}&hydrate=linescore,team,decisions`),
     HEALTH.safeFetch(`${base}/stats?stats=season&group=hitting&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=60&sportId=1&gameType=R`).catch(()=>null),
     HEALTH.safeFetch(`${base}/stats?stats=season&group=pitching&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=60&sportId=1&gameType=R`).catch(()=>null),
     HEALTH.safeFetch(`${base}/teams/${ATL_ID}/roster?rosterType=active&season=${season}`).catch(()=>null),
     HEALTH.safeFetch(`${espnBase}/teams/15?enable=roster,stats`).catch(()=>null),
-    HEALTH.safeFetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=5&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,uv_index_max&timezone=auto`).catch(()=>null)
+    HEALTH.safeFetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=5&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,uv_index_max&timezone=auto`).catch(()=>null),
+    HEALTH.safeFetch(`${base}/schedule?sportId=1&teamId=${ATL_ID}&startDate=${seasonStart}&endDate=${seasonEnd}&gameType=R`).catch(()=>null)
   ]);
 
   // Parse schedule early so we can find last game ID for boxscore fetch
@@ -543,13 +529,14 @@ async function fetchLiveData(){
   }
 
   // Second parallel wave: remaining JSON + boxscore for last game
-  const [standingsJ,battingJ,pitchingJ,rosterJ,espnJ,weatherJ,boxscoreJ]=await Promise.all([
+  const [standingsJ,battingJ,pitchingJ,rosterJ,espnJ,weatherJ,seasonScheduleJ,boxscoreJ]=await Promise.all([
     sr.json(),
     br?br.json():Promise.resolve(null),
     pr?pr.json():Promise.resolve(null),
     rr?rr.json():Promise.resolve(null),
     er?er.json().catch(()=>null):Promise.resolve(null),
     wr?wr.json().catch(()=>null):Promise.resolve(null),
+    ssr?ssr.json().catch(()=>null):Promise.resolve(null),
     lastGamePk?HEALTH.safeFetch(`${base}/game/${lastGamePk}/boxscore`).then(r=>r.json()).catch(()=>null):Promise.resolve(null)
   ]);
 
@@ -561,6 +548,7 @@ async function fetchLiveData(){
     roster:rosterJ,
     espn:espnJ,
     weather:weatherJ,
+    seasonSchedule:seasonScheduleJ,
     boxscore:boxscoreJ
   };
 }
@@ -649,9 +637,12 @@ function mergeLiveData(seed,live){
     d.nextOpp={...d.nextOpp,abbr:upcoming[0].opp};
   }
   // ── Live player stats ──
-  // Build position map from active roster
-  const posMap={};
-  for(const p of live.roster?.roster||[]) posMap[p.person.id]=p.position?.abbreviation||'—';
+  // Build position + jersey maps from active roster
+  const posMap={},jerseyMap={};
+  for(const p of live.roster?.roster||[]){
+    posMap[p.person.id]=p.position?.abbreviation||'—';
+    if(p.jerseyNumber)jerseyMap[p.person.id]=p.jerseyNumber;
+  }
 
   const fp=v=>parseFloat(String(v||'0').replace(/[^0-9.\-]/g,''))||0;
 
@@ -660,17 +651,30 @@ function mergeLiveData(seed,live){
     HEALTH.info(`MLB batting API: ${splits.length} player splits returned`);
     const batters=splits
       .filter(s=>parseInt(s.stat.plateAppearances||s.stat.atBats||0)>=10)
-      .map(s=>({
-        name:s.player?.fullName||s.person?.fullName||'Unknown',
-        pos:posMap[s.player?.id||s.person?.id]||'—',
-        avg:fp(s.stat.avg),
-        obp:fp(s.stat.obp),
-        slg:fp(s.stat.slg),
-        ops:fp(s.stat.ops),
-        hr:s.stat.homeRuns||0,
-        rbi:s.stat.rbi||0,
-        sb:s.stat.stolenBases||0,
-      }))
+      .map(s=>{
+        const pid=s.player?.id||s.person?.id;
+        return{
+          id:pid,
+          jersey:jerseyMap[pid]||'',
+          name:s.player?.fullName||s.person?.fullName||'Unknown',
+          pos:posMap[pid]||'—',
+          avg:fp(s.stat.avg),
+          obp:fp(s.stat.obp),
+          slg:fp(s.stat.slg),
+          ops:fp(s.stat.ops),
+          hr:s.stat.homeRuns||0,
+          rbi:s.stat.rbi||0,
+          sb:s.stat.stolenBases||0,
+          h:s.stat.hits||0,
+          ab:s.stat.atBats||0,
+          r:s.stat.runs||0,
+          bb:s.stat.baseOnBalls||0,
+          so:s.stat.strikeOuts||0,
+          pa:s.stat.plateAppearances||0,
+          doubles:s.stat.doubles||0,
+          triples:s.stat.triples||0,
+        };
+      })
       .filter(b=>b.ops>0)
       .sort((a,b)=>b.ops-a.ops)
       .slice(0,12);
@@ -696,12 +700,15 @@ function mergeLiveData(seed,live){
       })
       .map(s=>{
         const st=s.stat;
+        const pid=s.player?.id||s.person?.id;
         const gs=st.gamesStarted||0,g=Math.max(st.gamesPitched||1,1);
         const isSP=gs>=2&&(gs/g)>=0.35;
         const ipParts=String(st.inningsPitched||'0').split('.');
         const ipDec=(parseInt(ipParts[0]||'0'))+(parseInt(ipParts[1]||'0')/3);
         const fipRaw=ipDec>0?((13*(st.homeRuns||0)+3*((st.baseOnBalls||0)+(st.hitByPitch||0))-2*(st.strikeOuts||0))/ipDec+FIP_C):0;
         return{
+          id:pid,
+          jersey:jerseyMap[pid]||'',
           name:s.player?.fullName||s.person?.fullName||'Unknown',
           pos:isSP?'SP':'RP',
           era:fp(st.era),
@@ -710,7 +717,14 @@ function mergeLiveData(seed,live){
           bb9:fp(st.walksPer9Inn),
           fip:Math.max(0,parseFloat(fipRaw.toFixed(2))),
           w:st.wins||0,
+          l:st.losses||0,
           sv:st.saves||0,
+          ip:String(st.inningsPitched||'0'),
+          k:st.strikeOuts||0,
+          bbTotal:st.baseOnBalls||0,
+          hrAllowed:st.homeRuns||0,
+          gp:st.gamesPitched||0,
+          gs:gs,
         };
       })
       .filter(p=>p.era>=0)
@@ -849,6 +863,36 @@ function mergeLiveData(seed,live){
     }catch(e){HEALTH.warn(`Boxscore parse error: ${e.message}`);}
   }else{HEALTH.warn('MLB boxscore fetch failed — showing cached last game');}
 
+  // ── Season trajectory (every completed reg-season game) — drives Trends ──
+  if(live.seasonSchedule){
+    const traj=[];
+    let cumW=0,cumL=0,cumRS=0,cumRA=0;
+    for(const day of live.seasonSchedule.dates||[]){
+      for(const g of day.games||[]){
+        if(g.status?.abstractGameState!=='Final')continue;
+        const isHome=g.teams?.home?.team?.id===ATL_ID;
+        const atlT=isHome?g.teams.home:g.teams.away;
+        const oppT=isHome?g.teams.away:g.teams.home;
+        const rs=atlT.score??0,ra=oppT.score??0;
+        const won=rs>ra;
+        if(won)cumW++;else cumL++;
+        cumRS+=rs;cumRA+=ra;
+        traj.push({
+          date:day.date,
+          opp:oppT.team.abbreviation||'OPP',
+          rs,ra,
+          diff:rs-ra,
+          won,
+          gameNo:cumW+cumL,
+          cumW,cumL,
+          cumDiff:cumRS-cumRA,
+          winPct:cumW/(cumW+cumL),
+        });
+      }
+    }
+    d.trajectory=traj;
+  }
+
   return d;
 }
 
@@ -906,7 +950,6 @@ function showTab(tab,btn){
   currentTab=tab;
   const c=document.getElementById('content');
   c.scrollTop=0;
-  cbStopBlink();
   renderTab(tab);
 }
 
@@ -916,12 +959,10 @@ function renderTab(tab){
   if(c) c.dataset.tab=tab;
   const fns={
     overview:()=>renderOverview(d),
+    cards:()=>renderCards(d),
+    trends:()=>renderTrends(d),
     stats:()=>renderStats(d),
     standings:()=>renderStandings(d),
-    highlights:()=>renderHighlights(d),
-    series:()=>renderSeries(d),
-    predictor:()=>renderPredictor(),
-    chopbot:()=>renderChopBot(),
   };
   if(fns[tab]){lastRenderTime=Date.now();HEALTH.safeRender(tab,fns[tab]);}
 }
@@ -1013,506 +1054,386 @@ function renderStats(d){
     </div>`;
 }
 
-// ── SERIES ──
-function renderSeries(d){
-  document.getElementById('content').innerHTML=`
-    <div class="mhdr">
-      <div>
-        <div class="mvs">ATL <span style="color:var(--muted);font-size:18px">vs</span> ${d.nextOpp.abbr}</div>
-        <div style="font-size:12px;color:var(--muted)">Atlanta Braves vs ${d.nextOpp.name}</div>
-        <div style="display:flex;gap:16px;margin-top:8px">
-          <div><div style="font-size:10px;color:var(--muted)">Braves</div><div style="font-family:'Anton',sans-serif;font-size:20px;color:var(--green)">${d.record.w}-${d.record.l}</div></div>
-          <div><div style="font-size:10px;color:var(--muted)">${d.nextOpp.abbr}</div><div style="font-family:'Anton',sans-serif;font-size:20px;color:var(--crimson)">${d.nextOpp.rec}</div></div>
-        </div>
-      </div>
-      <div style="font-size:40px">⚾</div>
-    </div>
-    ${d.nextGames.map(g=>`<div class="gc"><div class="gcn">${g.n}</div><div style="flex:1"><div class="gcdate">${g.date} · vs ${g.opp}</div><div class="gcloc">${g.loc}</div></div><div class="gctime">${g.time}</div></div>`).join('')}
-    <div class="card">
-      <div class="ct" style="color:var(--muted)">MATCHUP ADVANTAGE</div>
-      <div style="display:grid;grid-template-columns:auto 1fr auto;gap:4px;font-size:10px;color:var(--dim);padding:4px 0 8px;letter-spacing:1px;font-weight:700">
-        <span>ATL</span><span style="text-align:center">CATEGORY</span><span>${d.nextOpp.abbr}</span>
-      </div>
-      ${d.matchup.map(row=>`<div class="mrow"><div class="mav" style="color:${row.favors==='ATL'?'var(--green)':'var(--crimson)'}">${row.atl}</div><div class="mlab">${row.label}</div><div class="mbv" style="color:${row.favors==='OPP'?'var(--green)':'var(--crimson)'}">${row.opp}</div></div>`).join('')}
-      <div class="ebox"><span style="color:var(--green);font-weight:700">Braves lead in ${d.matchup.filter(r=>r.favors==='ATL').length} of ${d.matchup.length} categories.</span><span style="color:var(--muted)"> ${d.nextOpp.abbr} has the edge in ${d.matchup.filter(r=>r.favors==='OPP').length}. 🪓</span></div>
-    </div>`;
+// ════════════════════════════════════════
+// CHART HELPERS — inline SVG, no deps
+// ════════════════════════════════════════
+function chBox(title,color,body,sub){
+  return`<div class="card chart-card"><div class="ct" style="color:${color||'var(--green)'}">${title}</div>${sub?`<div style="font-size:10px;color:var(--dim);margin-bottom:8px;letter-spacing:1px;text-transform:none">${sub}</div>`:''}${body}</div>`;
 }
 
-// ── STANDINGS ──
-function renderStandings(d){
-  const top=d.nle[0];
-  const sorted=[...d.mlbTop].sort((a,b)=>(b.w/(b.w+b.l))-(a.w/(a.w+a.l)));
-  document.getElementById('content').innerHTML=`
-    <div class="card">
-      <div class="ct" style="color:var(--green)">NL EAST STANDINGS</div>
-      <table class="stbl">
-        <thead><tr><th>TEAM</th><th>W</th><th>L</th><th>PCT</th><th>GB</th></tr></thead>
-        <tbody>${d.nle.map((t,i)=>`<tr class="${t.abbr==='ATL'?'me':''}"><td>${i===0?'🥇 ':''}${t.abbr==='ATL'?`<strong>${t.name}</strong>`:t.name}</td><td style="color:var(--green)">${t.w}</td><td style="color:var(--crimson)">${t.l}</td><td>${pct(t.w,t.l)}</td><td style="color:var(--muted)">${gb(top.w,top.l,t.w,t.l)}</td></tr>`).join('')}</tbody>
-      </table>
-    </div>
-    <div class="card" style="border-color:#60a5fa33">
-      <div class="ct" style="color:#60a5fa">MLB TOP TEAMS · WIN %</div>
-      ${sorted.map((t,i)=>{const p=t.w/(t.w+t.l);return`<div class="rbrow"><span class="rbn">#${i+1}</span><span class="rbnm" style="${t.abbr==='ATL'?'color:var(--green);font-weight:700':''}">${t.abbr==='ATL'?'🪓 ':''}${t.name}</span><div class="rbw"><div class="rbb" style="width:${p*100}%;background:${t.abbr==='ATL'?'var(--green)':'#60a5fa'}"></div></div><span class="rbp" style="${t.abbr==='ATL'?'color:var(--green)':''}">${pct(t.w,t.l)}</span></div>`}).join('')}
-    </div>`;
+// Multi-series line chart. series:[{points:[{x,y}], color, fill, label}]
+function chMultiLine(series,opts){
+  const{w=320,h=160,yMin,yMax,refLines=[],showDots=false,yFmt}=opts||{};
+  if(!series.length||!series[0].points.length)return`<div style="color:var(--dim);text-align:center;padding:20px;font-size:12px">No data yet</div>`;
+  const allY=series.flatMap(s=>s.points.map(p=>p.y)).concat(refLines.map(r=>r.y));
+  const allX=series.flatMap(s=>s.points.map(p=>p.x));
+  const xMin=Math.min(...allX),xMax=Math.max(...allX);
+  const ymin=yMin!=null?yMin:Math.min(...allY);
+  const ymax=yMax!=null?yMax:Math.max(...allY);
+  const padL=34,padR=12,padT=10,padB=22;
+  const innerW=w-padL-padR,innerH=h-padT-padB;
+  const sx=x=>padL+(xMax===xMin?innerW/2:((x-xMin)/(xMax-xMin))*innerW);
+  const sy=y=>padT+(ymax===ymin?innerH/2:innerH-((y-ymin)/(ymax-ymin))*innerH);
+  const fmt=v=>yFmt?yFmt(v):(Math.abs(v)<1?v.toFixed(3):v.toFixed(0));
+  const yt=[ymin,(ymin+ymax)/2,ymax];
+  const yTicks=yt.map(y=>`<text x="${padL-4}" y="${sy(y)+3}" text-anchor="end" font-size="9" fill="#5a7a62" font-family="JetBrains Mono,monospace">${fmt(y)}</text>`).join('');
+  const yGrid=yt.map(y=>`<line x1="${padL}" x2="${w-padR}" y1="${sy(y).toFixed(1)}" y2="${sy(y).toFixed(1)}" stroke="#1e3a26" stroke-width="0.5"/>`).join('');
+  const refHtml=refLines.map(r=>`<line x1="${padL}" x2="${w-padR}" y1="${sy(r.y).toFixed(1)}" y2="${sy(r.y).toFixed(1)}" stroke="${r.color||'#facc15'}" stroke-dasharray="3,3" stroke-width="1"/>${r.label?`<text x="${w-padR-2}" y="${sy(r.y)-3}" text-anchor="end" font-size="8" fill="${r.color||'#facc15'}">${r.label}</text>`:''}`).join('');
+  let body='';
+  series.forEach(s=>{
+    const linePath=s.points.map((p,i)=>`${i?'L':'M'}${sx(p.x).toFixed(1)},${sy(p.y).toFixed(1)}`).join('');
+    if(s.fill){
+      const areaPath=`${linePath}L${sx(s.points[s.points.length-1].x).toFixed(1)},${sy(ymin).toFixed(1)}L${sx(s.points[0].x).toFixed(1)},${sy(ymin).toFixed(1)}Z`;
+      body+=`<path d="${areaPath}" fill="${s.fill}"/>`;
+    }
+    body+=`<path d="${linePath}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    if(showDots)body+=s.points.map(p=>`<circle cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="2" fill="${s.color}"/>`).join('');
+  });
+  const fx=series[0].points[0],lx=series[0].points[series[0].points.length-1];
+  const xAx=`<text x="${padL}" y="${h-6}" font-size="9" fill="#5a7a62">G${fx.x}</text><text x="${w-padR}" y="${h-6}" text-anchor="end" font-size="9" fill="#5a7a62">G${lx.x}</text>`;
+  return`<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;display:block;max-height:240px">${yGrid}${refHtml}${body}${yTicks}${xAx}</svg>`;
 }
 
-// ── HIGHLIGHTS ──
-function renderHighlights(d){
-  const g=d.lastGame;
-  const atlIsHome=g.home.abbr==='ATL';
-  const opp=atlIsHome?g.away.abbr:g.home.abbr;
-  const atlScore=atlIsHome?g.home.runs:g.away.runs;
-  const oppScore=atlIsHome?g.away.runs:g.home.runs;
-  const atlH=atlIsHome?(g.home.hits??0):(g.away.hits??0);
-  const oppH=atlIsHome?(g.away.hits??0):(g.home.hits??0);
-  const atlE=atlIsHome?(g.home.errors??0):(g.away.errors??0);
-  const oppE=atlIsHome?(g.away.errors??0):(g.home.errors??0);
-  const lsA=g.innings.map(i=>`<td style="text-align:center;padding:5px 3px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim)">${i.inn}</td>`).join('');
-  const lsATL=g.innings.map(i=>`<td style="text-align:center;padding:5px 3px;font-family:'JetBrains Mono',monospace;font-size:12px;color:${i.atl>0?'var(--green)':'var(--muted)'}">${i.atl}</td>`).join('');
-  const lsOPP=g.innings.map(i=>{const k=Object.keys(i).find(k=>k!=='inn'&&k!=='atl');const v=i[k]||0;return`<td style="text-align:center;padding:5px 3px;font-family:'JetBrains Mono',monospace;font-size:12px;color:${v>0?'var(--crimson)':'var(--muted)'}">${v}</td>`;}).join('');
-  document.getElementById('content').innerHTML=`
-    <div style="background:linear-gradient(135deg,#0d1f0f,#0a1628);border:1px solid #22c55e44;border-radius:14px;padding:18px 16px;margin-bottom:12px;position:relative;overflow:hidden">
-      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--green),var(--red))"></div>
-      <div style="font-size:10px;color:var(--green);letter-spacing:2px;font-weight:700;margin-bottom:10px">🎬 LAST GAME · ${g.date}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div style="text-align:center;flex:1"><div style="font-family:'Anton',sans-serif;font-size:14px;color:var(--muted)">ATL</div><div style="font-family:'Anton',sans-serif;font-size:52px;color:var(--green);line-height:1;text-shadow:0 0 20px rgba(34,197,94,.4)">${atlScore}</div><div style="font-size:10px;color:var(--dim)">${atlH} H · ${atlE} E</div></div>
-        <div style="text-align:center;padding:0 8px"><div style="font-family:'Anton',sans-serif;font-size:20px;color:var(--dim)">FINAL</div><div style="font-size:10px;color:var(--dim);margin-top:2px">${g.venue}</div></div>
-        <div style="text-align:center;flex:1"><div style="font-family:'Anton',sans-serif;font-size:14px;color:var(--muted)">${opp}</div><div style="font-family:'Anton',sans-serif;font-size:52px;color:var(--crimson);line-height:1;text-shadow:0 0 20px rgba(239,68,68,.3)">${oppScore}</div><div style="font-size:10px;color:var(--dim)">${oppH} H · ${oppE} E</div></div>
-      </div>
-      <div style="font-size:13px;color:#d4edda;line-height:1.6;border-top:1px solid var(--border);padding-top:10px">${g.recap}</div>
-      <div style="display:flex;gap:12px;margin-top:10px;font-size:12px"><span>✅ <strong style="color:var(--green)">${g.winner}</strong></span><span>❌ <strong style="color:var(--crimson)">${g.loser}</strong></span></div>
-    </div>
-    <div class="card" style="padding:14px 10px;overflow-x:auto">
-      <div class="ct" style="color:var(--muted);padding-left:4px">LINESCORE</div>
-      <table style="width:100%;border-collapse:collapse;min-width:300px">
-        <thead><tr><td style="width:36px"></td>${lsA}<td style="text-align:center;padding:5px 5px;font-size:11px;color:var(--dim);font-weight:700;border-left:1px solid var(--border)">R</td><td style="text-align:center;padding:5px 3px;font-size:11px;color:var(--dim);font-weight:700">H</td><td style="text-align:center;padding:5px 3px;font-size:11px;color:var(--dim);font-weight:700">E</td></tr></thead>
-        <tbody>
-          <tr style="background:#22c55e08"><td style="padding:5px;font-family:'Anton',sans-serif;font-size:13px;color:var(--green)">ATL</td>${lsATL}<td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--green);border-left:1px solid var(--border)">${atlScore}</td><td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">${atlH}</td><td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">${atlE}</td></tr>
-          <tr><td style="padding:5px;font-family:'Anton',sans-serif;font-size:13px;color:var(--crimson)">${opp}</td>${lsOPP}<td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--crimson);border-left:1px solid var(--border)">${oppScore}</td><td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">${oppH}</td><td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)">${oppE}</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="card">
-      <div class="ct" style="color:var(--yellow)">⚡ KEY MOMENTS</div>
-      <div style="display:flex;flex-direction:column;gap:10px">${g.keyMoments.map(m=>`<div style="display:flex;gap:12px;align-items:flex-start;padding:10px 12px;background:#0a1410;border-radius:10px;border:1px solid var(--border)"><div style="font-size:22px;flex-shrink:0;line-height:1.2">${m.icon}</div><div style="flex:1"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><span style="font-weight:700;font-size:14px">${m.player}</span><span style="font-size:10px;color:var(--dim);letter-spacing:1px">${m.inn}</span></div><div style="font-size:12px;color:var(--muted);margin-bottom:3px">${m.desc}</div><div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--green);font-weight:700">${m.score}</div></div></div>`).join('')}</div>
-    </div>
-    <div class="card">
-      <div class="ct" style="color:var(--green)">🏏 ATL BATTING</div>
-      <table class="hltbl"><thead><tr><th>PLAYER</th><th>AB</th><th>H</th><th>HR</th><th>RBI</th><th>R</th></tr></thead>
-      <tbody>${g.atlBatters.map((b,i)=>`<tr style="background:${i%2===0?'#0d1a0f':'#0a140c'}"><td><div style="font-weight:700;font-size:13px">${b.name}</div>${b.note?`<div style="font-size:10px;color:var(--yellow)">${b.note}</div>`:''}</td><td style="color:var(--muted)">${b.ab}</td><td style="color:${b.h>0?'var(--green)':'var(--dim)'}">${b.h}</td><td style="color:${b.hr>0?'var(--yellow)':'var(--dim)'}">${b.hr||'—'}</td><td style="color:${b.rbi>0?'var(--green)':'var(--dim)'}">${b.rbi}</td><td style="color:${b.r>0?'var(--blue)':'var(--dim)'}">${b.r}</td></tr>`).join('')}</tbody></table>
-    </div>
-    <div class="card" style="margin-bottom:24px">
-      <div class="ct" style="color:var(--red)">⚾ ATL PITCHING</div>
-      <table class="hltbl"><thead><tr><th>PITCHER</th><th>IP</th><th>H</th><th>ER</th><th>K</th><th>BB</th></tr></thead>
-      <tbody>${g.atlPitchers.map((p,i)=>`<tr style="background:${i%2===0?'#0d1a0f':'#0a140c'}"><td><div style="font-weight:700;font-size:13px">${p.name}</div><div style="font-size:10px;color:${p.role.includes('W')?'var(--green)':'var(--dim)'}">${p.role}${p.note?' · '+p.note:''}</div></td><td style="color:var(--muted)">${p.ip}</td><td style="color:${p.h>0?'var(--yellow)':'var(--dim)'}">${p.h}</td><td style="color:${p.er>0?'var(--crimson)':'var(--green)'}">${p.er}</td><td style="color:${p.k>4?'var(--green)':p.k>0?'var(--muted)':'var(--dim)'}">${p.k}</td><td style="color:${p.bb>2?'var(--crimson)':'var(--muted)'}">${p.bb}</td></tr>`).join('')}</tbody></table>
-    </div>`;
+// Horizontal bars with optional reference line. items:[{label, value, fmt?}]
+function chBars(items,opts){
+  const{w=320,h,max,refValue,refLabel='MLB AVG',lowerIsBetter=false,goodColor='#22c55e',badColor='#ef4444',neutralColor='#facc15'}=opts||{};
+  if(!items.length)return'';
+  const padL=88,padR=46,padT=10,padB=8;
+  const calcH=h||(padT+padB+items.length*22);
+  const innerW=w-padL-padR;
+  const rowH=(calcH-padT-padB)/items.length;
+  const barH=Math.min(rowH*0.62,15);
+  const mx=max!=null?max:Math.max(...items.map(i=>i.value),refValue||0)*1.1;
+  const sx=v=>padL+Math.max(0,v/mx)*innerW;
+  let svg='';
+  if(refValue!=null){
+    svg+=`<line x1="${sx(refValue).toFixed(1)}" x2="${sx(refValue).toFixed(1)}" y1="${padT-2}" y2="${calcH-padB+2}" stroke="#facc15" stroke-dasharray="3,3" stroke-width="1"/>`;
+    svg+=`<text x="${(sx(refValue)+3).toFixed(1)}" y="${padT+8}" font-size="8" fill="#facc15">${refLabel}</text>`;
+  }
+  items.forEach((it,i)=>{
+    const cy=padT+i*rowH+rowH/2;
+    const barY=cy-barH/2;
+    let color=it.color;
+    if(!color){
+      if(refValue==null)color=neutralColor;
+      else{
+        const better=lowerIsBetter?it.value<refValue:it.value>refValue;
+        const within5=Math.abs(it.value-refValue)/refValue<0.05;
+        color=within5?neutralColor:(better?goodColor:badColor);
+      }
+    }
+    svg+=`<text x="${padL-6}" y="${cy+3.5}" text-anchor="end" font-size="10" fill="#e8ede9" font-family="DM Sans,sans-serif">${it.label}</text>`;
+    svg+=`<rect x="${padL}" y="${barY.toFixed(1)}" width="${Math.max(0,sx(it.value)-padL).toFixed(1)}" height="${barH.toFixed(1)}" rx="3" fill="${color}" opacity="0.88"/>`;
+    const fmt=it.fmt?it.fmt(it.value):(it.value<1?it.value.toFixed(3):it.value.toFixed(2));
+    svg+=`<text x="${(sx(it.value)+4).toFixed(1)}" y="${cy+3.5}" font-size="10" fill="#e8ede9" font-family="JetBrains Mono,monospace" font-weight="700">${fmt}</text>`;
+  });
+  return`<svg viewBox="0 0 ${w} ${calcH}" style="width:100%;height:auto;display:block;max-height:${calcH}px">${svg}</svg>`;
+}
+
+// Run-diff bars by game. games:[{diff, opp, won}]
+function chDiffBars(games,opts){
+  const{w=320,h=140}=opts||{};
+  if(!games.length)return`<div style="color:var(--dim);text-align:center;padding:20px;font-size:12px">No data yet</div>`;
+  const padL=10,padR=10,padT=10,padB=26;
+  const innerW=w-padL-padR,innerH=h-padT-padB;
+  const maxAbs=Math.max(1,...games.map(g=>Math.abs(g.diff)));
+  const slot=innerW/games.length;
+  const barW=Math.max(2,slot-1);
+  const zeroY=padT+innerH/2;
+  const scale=(innerH/2)/maxAbs;
+  let svg=`<line x1="${padL}" x2="${w-padR}" y1="${zeroY}" y2="${zeroY}" stroke="#5a7a62" stroke-width="0.5"/>`;
+  games.forEach((g,i)=>{
+    const x=padL+i*slot+(slot-barW)/2;
+    const barH=Math.abs(g.diff)*scale;
+    const y=g.diff>=0?zeroY-barH:zeroY;
+    const col=g.diff>0?'#22c55e':(g.diff<0?'#ef4444':'#5a7a62');
+    svg+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(barH,1).toFixed(1)}" rx="1.5" fill="${col}" opacity="0.9"/>`;
+    if(games.length<=20){
+      svg+=`<text x="${(x+barW/2).toFixed(1)}" y="${h-padB+9}" text-anchor="middle" font-size="7" fill="#5a7a62" font-family="JetBrains Mono,monospace">${g.opp||''}</text>`;
+      svg+=`<text x="${(x+barW/2).toFixed(1)}" y="${h-padB+18}" text-anchor="middle" font-size="7" fill="${col}" font-family="JetBrains Mono,monospace" font-weight="700">${g.diff>0?'+':''}${g.diff}</text>`;
+    }
+  });
+  svg+=`<text x="${padL+2}" y="${padT+8}" font-size="8" fill="#22c55e">+${maxAbs}</text>`;
+  svg+=`<text x="${padL+2}" y="${h-padB-2}" font-size="8" fill="#ef4444">-${maxAbs}</text>`;
+  return`<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;display:block;max-height:180px">${svg}</svg>`;
+}
+
+// Last-N form grid: most-recent on the right
+function chFormGrid(games){
+  if(!games.length)return`<div style="color:var(--dim);text-align:center;padding:20px;font-size:12px">No completed games yet</div>`;
+  return`<div style="display:flex;flex-wrap:wrap;gap:5px">${games.map(g=>`<div title="${g.opp} ${g.score}" style="width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:13px;background:${g.res==='W'?'#22c55e22':'#ef444422'};border:1px solid ${g.res==='W'?'#22c55e66':'#ef444466'};color:${g.res==='W'?'var(--green)':'var(--crimson)'};cursor:default">${g.res}</div>`).join('')}</div>`;
 }
 
 // ════════════════════════════════════════
-// CHOP BOT TAB
+// TRENDS TAB — many in-depth graphs
 // ════════════════════════════════════════
-let cbMsgs=[], cbApiHist=[], cbBusy=false, cbBlinkT=null;
+function renderTrends(d){
+  const traj=d.trajectory||[];
+  const out=[];
 
-function cbStopBlink(){if(cbBlinkT){clearTimeout(cbBlinkT);cbBlinkT=null}}
+  // 1. Season W-L Trajectory
+  if(traj.length){
+    const winPts=traj.map(g=>({x:g.gameNo,y:g.cumW}));
+    const lossPts=traj.map(g=>({x:g.gameNo,y:g.cumL}));
+    const ymax=Math.max(traj[traj.length-1].cumW,traj[traj.length-1].cumL)+2;
+    out.push(chBox('📈 SEASON TRAJECTORY','var(--green)',
+      chMultiLine([
+        {points:winPts,color:'#22c55e',fill:'#22c55e15'},
+        {points:lossPts,color:'#ef4444',fill:'#ef444415'},
+      ],{yMin:0,yMax:ymax,h:170,yFmt:v=>v.toFixed(0)})
+      +`<div class="leg" style="margin-top:8px"><span><span class="dot" style="background:var(--green)"></span>Cumulative Wins</span><span><span class="dot" style="background:var(--crimson)"></span>Cumulative Losses</span></div>`,
+      `${traj.length} games played · separation is the story`));
+  }
 
-function cbBlink(){
-  const b=document.getElementById('cb-bot');
-  if(!b){cbBlinkT=null;return}
-  b.classList.add('blink');
-  setTimeout(()=>b.classList.remove('blink'),140);
-  cbBlinkT=setTimeout(cbBlink,2200+Math.random()*2600);
+  // 2. Cumulative Run Differential
+  if(traj.length){
+    const pts=traj.map(g=>({x:g.gameNo,y:g.cumDiff}));
+    const maxD=Math.max(...pts.map(p=>p.y),0)+5;
+    const minD=Math.min(...pts.map(p=>p.y),0)-5;
+    const col=traj[traj.length-1].cumDiff>=0?'#22c55e':'#ef4444';
+    out.push(chBox('🔥 CUMULATIVE RUN DIFFERENTIAL','#38bdf8',
+      chMultiLine([{points:pts,color:col,fill:col+'22'}],
+        {yMin:minD,yMax:maxD,h:160,refLines:[{y:0,color:'#5a7a62',label:'Even'}],yFmt:v=>(v>0?'+':'')+v.toFixed(0)}),
+      `Runs scored minus runs allowed, building game by game`));
+  }
+
+  // 3. Rolling 10-game Win %
+  if(traj.length>=5){
+    const win=traj.length<10?5:10;
+    const roll=[];
+    for(let i=win-1;i<traj.length;i++){
+      const slice=traj.slice(i-win+1,i+1);
+      const w=slice.filter(g=>g.won).length;
+      roll.push({x:traj[i].gameNo,y:w/win});
+    }
+    out.push(chBox(`📊 ROLLING ${win}-GAME WIN %`,'var(--yellow)',
+      chMultiLine([{points:roll,color:'#facc15',fill:'#facc1522'}],
+        {yMin:0,yMax:1,h:160,refLines:[{y:0.5,color:'#5a7a62',label:'.500'},{y:0.6,color:'#22c55e44',label:'.600'}],yFmt:v=>v.toFixed(3).replace('0.','.')}),
+      `Hot streaks and cold spells, smoothed over a rolling window`));
+  }
+
+  // 4. Recent Form (last 20)
+  const recentForm=traj.slice(-20).map(g=>({res:g.won?'W':'L',opp:g.opp,score:`${g.rs}-${g.ra}`}));
+  if(recentForm.length){
+    const recW=recentForm.filter(g=>g.res==='W').length;
+    out.push(chBox(`✅ LAST ${recentForm.length} GAMES · ${recW}-${recentForm.length-recW}`,'var(--muted)',
+      chFormGrid(recentForm),'Most recent on the right · hover for opponent + score'));
+  }
+
+  // 5. Run Differential per Game (last 25)
+  const recentDiff=traj.slice(-25).map(g=>({diff:g.diff,opp:g.opp,won:g.won}));
+  if(recentDiff.length){
+    out.push(chBox('⚾ RUN DIFFERENTIAL — LAST 25','var(--green)',
+      chDiffBars(recentDiff,{h:160}),
+      `Margin of victory/defeat by game`));
+  }
+
+  // 6. Top Batter OPS vs MLB
+  if(d.batters?.length){
+    const top=[...d.batters].sort((a,b)=>b.ops-a.ops).slice(0,8)
+      .map(b=>({label:b.name.split(' ').slice(-1)[0].slice(0,10),value:b.ops,fmt:v=>v.toFixed(3)}));
+    out.push(chBox('🏏 TOP BATTERS — OPS','var(--green)',
+      chBars(top,{refValue:MLB_BAT.ops,refLabel:'MLB AVG',lowerIsBetter:false,max:Math.max(...top.map(t=>t.value),MLB_BAT.ops)*1.15}),
+      `Higher is better · MLB average ${MLB_BAT.ops.toFixed(3)}`));
+  }
+
+  // 7. Starters ERA vs MLB
+  if(d.pitchers?.length){
+    const sp=d.pitchers.filter(p=>p.pos==='SP').slice(0,8)
+      .map(p=>({label:p.name.split(' ').slice(-1)[0].slice(0,10),value:p.era,fmt:v=>v.toFixed(2)}));
+    if(sp.length)out.push(chBox('🎯 STARTERS — ERA','var(--red)',
+      chBars(sp,{refValue:MLB_PIT.era,refLabel:'MLB AVG',lowerIsBetter:true,max:Math.max(...sp.map(t=>t.value),MLB_PIT.era)*1.15}),
+      `Lower is better · MLB average ${MLB_PIT.era.toFixed(2)}`));
+  }
+
+  // 8. Bullpen ERA vs MLB
+  if(d.pitchers?.length){
+    const rp=d.pitchers.filter(p=>p.pos==='RP').slice(0,8)
+      .map(p=>({label:p.name.split(' ').slice(-1)[0].slice(0,10),value:p.era,fmt:v=>v.toFixed(2)}));
+    if(rp.length)out.push(chBox('🔒 BULLPEN — ERA','var(--red)',
+      chBars(rp,{refValue:MLB_PIT.era,refLabel:'MLB AVG',lowerIsBetter:true,max:Math.max(...rp.map(t=>t.value),MLB_PIT.era)*1.15}),
+      `Lower is better · MLB average ${MLB_PIT.era.toFixed(2)}`));
+  }
+
+  // 9. Bullpen K/9
+  if(d.pitchers?.length){
+    const rp=d.pitchers.filter(p=>p.pos==='RP').slice(0,8)
+      .map(p=>({label:p.name.split(' ').slice(-1)[0].slice(0,10),value:p.k9,fmt:v=>v.toFixed(1)}));
+    if(rp.length)out.push(chBox('💨 BULLPEN — STRIKEOUTS PER 9','#38bdf8',
+      chBars(rp,{refValue:MLB_PIT.k9,refLabel:'MLB AVG',lowerIsBetter:false,max:Math.max(...rp.map(t=>t.value),MLB_PIT.k9)*1.15}),
+      `Higher is better · MLB average ${MLB_PIT.k9.toFixed(1)}`));
+  }
+
+  // 10. NL East gap (current standings)
+  if(d.nle?.length){
+    const top=d.nle[0];
+    const items=d.nle.map(t=>({label:t.abbr,value:t.w/(t.w+t.l),color:t.abbr==='ATL'?'#22c55e':'#38bdf8',fmt:v=>v.toFixed(3).replace('0.','.')}));
+    out.push(chBox('🏆 NL EAST — WIN %','var(--green)',
+      chBars(items,{max:Math.max(...items.map(i=>i.value))*1.1,refValue:0.500,refLabel:'.500'}),
+      `Atlanta leads by ${gb(top.w,top.l,d.nle[1]?.w||0,d.nle[1]?.l||0)} games over ${d.nle[1]?.abbr||'2nd'}`));
+  }
+
+  // 11. Home / Away / L10 splits
+  const splits=[
+    {label:'Home',rec:d.record.home},
+    {label:'Away',rec:d.record.away},
+    {label:'Last 10',rec:d.record.last10},
+  ].map(s=>{
+    const[w,l]=String(s.rec||'0-0').split('-').map(Number);
+    return{label:s.label,value:(w+l)?w/(w+l):0,fmt:v=>v.toFixed(3).replace('0.','.'),rec:s.rec};
+  });
+  out.push(chBox('🏟️ SPLITS — WIN %','var(--muted)',
+    chBars(splits.map(s=>({label:`${s.label} ${s.rec}`,value:s.value,fmt:s.fmt})),
+      {refValue:0.500,refLabel:'.500',max:1.0,lowerIsBetter:false}),
+    `How the Braves perform at home, on the road, and recently`));
+
+  // 12. Run-scoring distribution (avg runs scored / allowed)
+  if(traj.length){
+    const games=traj.length;
+    const totalRS=traj.reduce((a,g)=>a+g.rs,0);
+    const totalRA=traj.reduce((a,g)=>a+g.ra,0);
+    const avgRS=totalRS/games,avgRA=totalRA/games;
+    const items=[
+      {label:'Runs / Game',value:+avgRS.toFixed(2),fmt:v=>v.toFixed(2),color:'#22c55e'},
+      {label:'Runs Allowed',value:+avgRA.toFixed(2),fmt:v=>v.toFixed(2),color:'#ef4444'},
+    ];
+    out.push(chBox('📊 OFFENSE vs DEFENSE — RUNS PER GAME','#38bdf8',
+      chBars(items,{max:Math.max(avgRS,avgRA)*1.25,refValue:4.5,refLabel:'MLB ~4.5'}),
+      `Season averages over ${games} games · MLB-wide is ≈ 4.5 RPG`));
+  }
+
+  document.getElementById('content').innerHTML=out.join('');
 }
 
-function cbState(s){
-  const b=document.getElementById('cb-bot'),st=document.getElementById('cb-stxt');
-  if(!b)return;
-  b.classList.remove('thinking','talking','happy');
-  if(s==='thinking'){b.classList.add('thinking');if(st)st.textContent='Thinking…'}
-  else if(s==='talking'){b.classList.add('talking');if(st)st.textContent='Responding…'}
-  else if(s==='happy'){
-    b.classList.add('happy');
-    if(st)st.textContent='Let\'s go Braves! 🪓';
-    setTimeout(()=>{b.classList.remove('happy');if(st)st.textContent='Ready to Chop'},1200);
-  }else{if(st)st.textContent='Ready to Chop'}
+// ════════════════════════════════════════
+// PLAYER CARDS TAB — Braves-themed flippable cards
+// ════════════════════════════════════════
+function pcardPhoto(id){
+  return id?`https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_480,q_auto:best/v1/people/${id}/headshot/67/current`:'';
 }
 
-function cbEsc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-
-function cbScrollEnd(){const el=document.getElementById('cb-msgs');if(el)el.scrollTop=el.scrollHeight}
-
-function cbAddBubble(from,text,isTyping=false){
-  const el=document.getElementById('cb-msgs');if(!el)return;
-  document.querySelectorAll('.cb-typing').forEach(n=>n.remove());
-  const d=document.createElement('div');
-  d.className='cmsg '+(from==='user'?'user':'bot')+(isTyping?' cb-typing':'');
-  if(from==='user'){
-    d.innerHTML=`<div class="cbubble">${cbEsc(text)}</div>`;
-  }else if(isTyping){
-    d.innerHTML=`<div class="cavy">🪓</div><div class="cbubble"><div class="ctyping"><span></span><span></span><span></span></div></div>`;
+function pcStatRow(label,value,avg,lowerBetter){
+  let display=value,numeric=value;
+  if(typeof value==='number'){
+    if(value<1&&value>0)display=value.toFixed(3);
+    else if(label==='ERA'||label==='WHIP'||label==='FIP'||label==='K/9'||label==='BB/9'||label==='K/BB')display=value.toFixed(2);
+    else display=String(Math.round(value*100)/100);
+    numeric=value;
   }else{
-    d.innerHTML=`<div class="cavy">🪓</div><div class="cbubble">${text}</div>`;
+    numeric=parseFloat(value)||0;
   }
-  el.appendChild(d);cbScrollEnd();
+  const color=avg!=null?sc(numeric,avg,lowerBetter):'var(--text)';
+  const avgDisplay=avg==null?'':(avg<1?avg.toFixed(3):avg.toFixed(2));
+  return`<div class="pcard-stat-row"><span class="pcard-stat-l">${label}</span><span class="pcard-stat-v" style="color:${color}">${display}</span><span class="pcard-stat-avg">${avgDisplay}</span></div>`;
 }
 
-async function cbSend(override){
-  if(cbBusy)return;
-  const inp=document.getElementById('cb-inp');
-  const txt=(override||inp?.value||'').trim();
-  if(!txt)return;
-  if(inp)inp.value='';
-  const btn=document.getElementById('cb-send');
-
-  cbAddBubble('user',txt);
-  cbMsgs.push({from:'user',text:txt});
-  cbApiHist.push({role:'user',content:txt});
-  cbBusy=true;
-  if(btn)btn.disabled=true;
-  cbState('thinking');
-  cbAddBubble('bot','',true);
-
-  try{
-    const _cd=DATA||SEED;
-    const _tb=_cd.batters.length?_cd.batters.reduce((a,b)=>b.ops>a.ops?b:a):null;
-    const _sp=_cd.pitchers.filter(p=>p.pos==='SP');
-    const _tp=_sp.length?_sp.reduce((a,b)=>b.era<a.era?b:a):null;
-    const _ord=n=>n==null?'1st':(['1st','2nd','3rd','4th','5th'][n-1]||`${n}th`);const systemContext=`Braves are ${_cd.record.w}-${_cd.record.l} (${_cd.record.pct}), ${_ord(_cd.record.nleRank)} NL East. Last 10: ${_cd.record.last10}. Run diff: ${_cd.record.runDiff}. Top batter: ${_tb?_tb.name+' '+_tb.ops.toFixed(3)+' OPS':'-'}. Ace: ${_tp?_tp.name+' '+_tp.era.toFixed(2)+' ERA':'-'}. Stats source: ${_cd._liveSource?'MLB Live API':'seed data'}.`;
-    const res=await fetch('/api/chat',{method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:cbApiHist,systemContext})});
-    const data=await res.json();
-    const reply=data.text||'Sorry, had trouble with that one — try again! 🪓';
-    cbApiHist.push({role:'assistant',content:reply});
-    cbMsgs.push({from:'bot',text:reply});
-    cbState('talking');
-    cbAddBubble('bot',reply);
-    setTimeout(()=>cbState('happy'),400);
-  }catch(e){
-    cbMsgs.push({from:'bot',text:'Couldn\'t connect right now. Check your signal and try again! ⚾'});
-    cbState('idle');
-    cbAddBubble('bot','Couldn\'t connect right now. Check your signal and try again! ⚾');
-  }
-
-  cbBusy=false;
-  if(btn)btn.disabled=false;
-  if(inp&&!override)inp.focus();
+function pcBatterStats(b){
+  const ops_plus=Math.round((b.ops/MLB_BAT.ops)*100);
+  const iso=b.slg-b.avg;
+  return`
+    <div class="pcard-stat-section">SLASH LINE</div>
+    ${pcStatRow('AVG',b.avg,MLB_BAT.avg,false)}
+    ${pcStatRow('OBP',b.obp,MLB_BAT.obp,false)}
+    ${pcStatRow('SLG',b.slg,MLB_BAT.slg,false)}
+    ${pcStatRow('OPS',b.ops,MLB_BAT.ops,false)}
+    <div class="pcard-stat-section">POWER &amp; SPEED</div>
+    ${pcStatRow('HR',b.hr,MLB_BAT.hr,false)}
+    ${pcStatRow('RBI',b.rbi,MLB_BAT.rbi,false)}
+    ${pcStatRow('SB',b.sb,MLB_BAT.sb,false)}
+    ${b.doubles!=null?pcStatRow('2B',b.doubles,null,false):''}
+    ${b.triples!=null?pcStatRow('3B',b.triples,null,false):''}
+    <div class="pcard-stat-section">ADVANCED</div>
+    ${pcStatRow('OPS+',ops_plus,100,false)}
+    ${pcStatRow('ISO',iso,MLB_BAT.slg-MLB_BAT.avg,false)}
+    ${b.ab!=null?pcStatRow('AB',b.ab,null,false):''}
+    ${b.h!=null?pcStatRow('H',b.h,null,false):''}
+    ${b.r!=null?pcStatRow('R',b.r,null,false):''}
+    ${b.bb!=null?pcStatRow('BB',b.bb,null,false):''}
+    ${b.so!=null?pcStatRow('SO',b.so,null,true):''}
+    ${b.pa!=null?pcStatRow('PA',b.pa,null,false):''}`;
 }
 
-function cbSugg(s){cbSend(s)}
-
-function cbBotSvg(){
-  return`<svg id="cb-bot" viewBox="0 0 180 258" xmlns="http://www.w3.org/2000/svg" width="162" height="232">
-  <!-- ground shadow -->
-  <ellipse cx="90" cy="253" rx="52" ry="7" fill="rgba(0,0,0,.2)"/>
-
-  <!-- PANTS & CLEATS -->
-  <rect x="52" y="212" width="30" height="38" rx="12" fill="#002B5C"/>
-  <rect x="98" y="212" width="30" height="38" rx="12" fill="#002B5C"/>
-  <rect x="44" y="210" width="92" height="7" rx="3.5" fill="#1a0a00"/>
-  <rect x="82" y="208" width="16" height="11" rx="3" fill="#c8a428"/>
-  <ellipse cx="67" cy="251" rx="20" ry="5.5" fill="#111"/>
-  <ellipse cx="113" cy="251" rx="20" ry="5.5" fill="#111"/>
-
-  <!-- JERSEY BODY -->
-  <rect x="36" y="148" width="108" height="68" rx="20" fill="white" stroke="#e0e0e0" stroke-width="1"/>
-  <line x1="64" y1="148" x2="64" y2="216" stroke="#002B5C" stroke-width="1.5" opacity=".17"/>
-  <line x1="90" y1="148" x2="90" y2="216" stroke="#002B5C" stroke-width="1.5" opacity=".17"/>
-  <line x1="116" y1="148" x2="116" y2="216" stroke="#002B5C" stroke-width="1.5" opacity=".17"/>
-  <path d="M74 148 Q90 164 106 148" fill="none" stroke="#CE1141" stroke-width="2.5" stroke-linecap="round"/>
-  <text x="90" y="185" font-size="13" text-anchor="middle" fill="#002B5C" font-family="Arial Black,sans-serif" font-weight="900" letter-spacing="3">ATL</text>
-  <text x="90" y="206" font-size="19" text-anchor="middle" fill="#CE1141" font-family="Anton,sans-serif">44</text>
-
-  <!-- LEFT ARM -->
-  <rect x="20" y="152" width="22" height="28" rx="10" fill="#002B5C"/>
-  <rect x="22" y="172" width="18" height="34" rx="8" fill="#f2a870"/>
-  <ellipse cx="31" cy="210" rx="13" ry="10" fill="#f2a870"/>
-
-  <!-- RIGHT ARM -->
-  <rect x="138" y="152" width="22" height="28" rx="10" fill="#002B5C"/>
-  <rect x="140" y="172" width="18" height="34" rx="8" fill="#f2a870"/>
-  <ellipse cx="149" cy="210" rx="13" ry="10" fill="#f2a870"/>
-
-  <!-- NECK -->
-  <rect x="78" y="134" width="24" height="18" rx="9" fill="#f2a870"/>
-
-  <!-- FACE -->
-  <g id="cb-head">
-    <!-- ears with inner detail -->
-    <ellipse cx="36" cy="98" rx="11" ry="14" fill="#f2a870"/>
-    <ellipse cx="36" cy="98" rx="6" ry="9" fill="#e08050" opacity=".38"/>
-    <ellipse cx="144" cy="98" rx="11" ry="14" fill="#f2a870"/>
-    <ellipse cx="144" cy="98" rx="6" ry="9" fill="#e08050" opacity=".38"/>
-
-    <!-- head — large, Disney-proportioned -->
-    <ellipse cx="90" cy="96" rx="52" ry="54" fill="#f2a870"/>
-    <!-- jaw softening -->
-    <ellipse cx="90" cy="136" rx="38" ry="19" fill="#f2a870"/>
-    <!-- very subtle temple shadow for depth -->
-    <ellipse cx="46" cy="88" rx="14" ry="20" fill="#e08050" opacity=".08"/>
-    <ellipse cx="134" cy="88" rx="14" ry="20" fill="#e08050" opacity=".08"/>
-
-    <!-- EYEBROWS — thick, arched, expressive -->
-    <path id="cb-brow-l" d="M52 69 Q67 60 82 66" fill="none" stroke="#4a2810" stroke-width="5" stroke-linecap="round"/>
-    <path id="cb-brow-r" d="M98 66 Q113 60 128 69" fill="none" stroke="#4a2810" stroke-width="5" stroke-linecap="round"/>
-
-    <!-- LEFT EYE -->
-    <!-- sclera -->
-    <ellipse cx="70" cy="86" rx="18" ry="16" fill="white"/>
-    <!-- iris outer ring -->
-    <circle cx="70" cy="87" r="12" fill="#8a5828"/>
-    <!-- iris mid -->
-    <circle cx="70" cy="87" r="8.5" fill="#b07038" opacity=".8"/>
-    <!-- pupil -->
-    <circle class="cb-pupil" cx="70" cy="87" r="6.5" fill="#160802"/>
-    <!-- main sparkle — large, upper-right -->
-    <circle cx="77" cy="79" r="5" fill="white"/>
-    <!-- secondary sparkle — small, lower-left -->
-    <circle cx="62" cy="92" r="2.2" fill="white" opacity=".55"/>
-    <!-- upper eyelid line — thick, defines the eye shape -->
-    <path d="M52 80 Q70 70 88 80" fill="none" stroke="#261006" stroke-width="3.5" stroke-linecap="round"/>
-    <!-- lower lid line — subtle -->
-    <path d="M54 94 Q70 100 86 94" fill="none" stroke="#a06040" stroke-width="1.2" stroke-linecap="round" opacity=".45"/>
-    <!-- blink lid (skin-colored, scales over eye) -->
-    <ellipse cx="70" cy="86" rx="18" ry="16" fill="#f2a870" class="cb-lid" style="transform-box:fill-box;transform-origin:center"/>
-
-    <!-- RIGHT EYE -->
-    <ellipse cx="110" cy="86" rx="18" ry="16" fill="white"/>
-    <circle cx="110" cy="87" r="12" fill="#8a5828"/>
-    <circle cx="110" cy="87" r="8.5" fill="#b07038" opacity=".8"/>
-    <circle class="cb-pupil" cx="110" cy="87" r="6.5" fill="#160802"/>
-    <circle cx="117" cy="79" r="5" fill="white"/>
-    <circle cx="102" cy="92" r="2.2" fill="white" opacity=".55"/>
-    <path d="M92 80 Q110 70 128 80" fill="none" stroke="#261006" stroke-width="3.5" stroke-linecap="round"/>
-    <path d="M94 94 Q110 100 126 94" fill="none" stroke="#a06040" stroke-width="1.2" stroke-linecap="round" opacity=".45"/>
-    <ellipse cx="110" cy="86" rx="18" ry="16" fill="#f2a870" class="cb-lid" style="transform-box:fill-box;transform-origin:center"/>
-
-    <!-- NOSE — small, Disney-style suggestion -->
-    <ellipse cx="90" cy="110" rx="9" ry="6.5" fill="#e08050" opacity=".3"/>
-    <path d="M83 112 Q87 117 90 115 Q93 117 97 112" fill="none" stroke="#b86840" stroke-width="2.2" stroke-linecap="round"/>
-
-    <!-- MOUTH — wide warm smile -->
-    <path id="cb-mouth" d="M70 122 Q90 138 110 122" fill="none" stroke="#9a4020" stroke-width="4" stroke-linecap="round"/>
-    <!-- teeth (visible on happy state) -->
-    <path id="cb-teeth" d="M75 125 Q90 134 105 125 L105 130 Q90 139 75 130Z" fill="white" opacity="0"/>
-    <!-- lower lip crease — very subtle -->
-    <path d="M80 133 Q90 138 100 133" fill="none" stroke="#c07858" stroke-width="1.5" stroke-linecap="round" opacity=".35"/>
-
-    <!-- cheek blush — classic Disney touch -->
-    <ellipse cx="46" cy="112" rx="15" ry="10" fill="#e86050" opacity=".18"/>
-    <ellipse cx="134" cy="112" rx="15" ry="10" fill="#e86050" opacity=".18"/>
-
-    <!-- dark hair peeking at hat brim sides -->
-    <path d="M40 65 Q50 56 60 61" fill="none" stroke="#3a2008" stroke-width="6" stroke-linecap="round"/>
-    <path d="M120 61 Q130 56 140 65" fill="none" stroke="#3a2008" stroke-width="6" stroke-linecap="round"/>
-  </g>
-
-  <!-- HAT — drawn last so it sits cleanly over the face -->
-  <g id="cb-hat">
-    <!-- dome (Braves navy) -->
-    <path d="M34 64 Q34 8 90 8 Q146 8 146 64Z" fill="#002B5C"/>
-    <!-- dome gloss highlight -->
-    <ellipse cx="80" cy="26" rx="28" ry="15" fill="#003a8a" opacity=".36"/>
-    <!-- top button -->
-    <circle cx="90" cy="9" r="5.5" fill="#CE1141"/>
-    <!-- sweatband stripe at dome base -->
-    <path d="M34 64 Q90 71 146 64 L146 70 Q90 77 34 70Z" fill="#CE1141"/>
-    <!-- "A" logo — bold white on navy -->
-    <text x="90" y="58" font-size="34" text-anchor="middle" fill="white" font-family="Arial Black,sans-serif" font-weight="900">A</text>
-    <!-- red bill — the signature Braves look -->
-    <path d="M16 67 Q90 62 164 67 Q170 76 150 83 Q90 88 30 83 Q10 76 16 67Z" fill="#CE1141"/>
-    <!-- bill underside shadow for depth -->
-    <path d="M30 74 Q90 79 150 74 L150 83 Q90 88 30 83Z" fill="#8a0c22" opacity=".52"/>
-    <!-- bill top highlight -->
-    <path d="M20 67 Q90 63 160 67" fill="none" stroke="#ff4060" stroke-width="1.5" opacity=".2" stroke-linecap="round"/>
-  </g>
-</svg>`;
+function pcPitcherStats(p){
+  const kbb=p.bb9>0?(p.k9/p.bb9):p.k9;
+  return`
+    <div class="pcard-stat-section">RUN PREVENTION</div>
+    ${pcStatRow('ERA',p.era,MLB_PIT.era,true)}
+    ${pcStatRow('WHIP',p.whip,MLB_PIT.whip,true)}
+    ${pcStatRow('FIP',p.fip,MLB_PIT.fip,true)}
+    <div class="pcard-stat-section">STUFF</div>
+    ${pcStatRow('K/9',p.k9,MLB_PIT.k9,false)}
+    ${pcStatRow('BB/9',p.bb9,MLB_PIT.bb9,true)}
+    ${pcStatRow('K/BB',kbb,2.75,false)}
+    <div class="pcard-stat-section">RESULTS</div>
+    ${pcStatRow('W',p.w,null,false)}
+    ${p.l!=null?pcStatRow('L',p.l,null,true):''}
+    ${p.pos==='RP'?pcStatRow('SV',p.sv,null,false):''}
+    ${p.ip?pcStatRow('IP',p.ip,null,false):''}
+    ${p.k!=null?pcStatRow('K',p.k,null,false):''}
+    ${p.bbTotal!=null?pcStatRow('BB',p.bbTotal,null,true):''}
+    ${p.hrAllowed!=null?pcStatRow('HR',p.hrAllowed,null,true):''}
+    ${p.gp?pcStatRow('G',p.gp,null,false):''}
+    ${p.gs?pcStatRow('GS',p.gs,null,false):''}`;
 }
 
-const CB_SUGG=[
-  "Who's the best Brave ever? 🪓","How's Chris Sale looking?",
-  "Keys to beating the Reds?","What's OPS and why does it matter?",
-  "Best MLB park to visit?","Who leads ATL in strikeouts?",
-];
+function pcEsc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
-function renderChopBot(){
-  cbStopBlink();
-  const greet=cbMsgs.length===0;
-  if(greet){
-    cbMsgs.push({from:'bot',text:'CHOP CHOP! I\'m <strong>The Chop Bot</strong> — your AI Braves analyst. Ask me anything about the Braves, MLB stats, history, or strategy. Let\'s talk baseball! ⚾🪓'});
-  }
-  const msgsHtml=cbMsgs.map(m=>
-    m.from==='user'
-      ?`<div class="cmsg user"><div class="cbubble">${cbEsc(m.text)}</div></div>`
-      :`<div class="cmsg bot"><div class="cavy">🪓</div><div class="cbubble">${m.text}</div></div>`
-  ).join('');
-  document.getElementById('content').innerHTML=`
-    <div class="cb-hero">
-      <div class="cb-glow"></div>
-      ${cbBotSvg()}
-      <div class="cb-name">THE CHOP BOT</div>
-      <div class="cb-status-bar"><span class="cb-sdot"></span><span id="cb-stxt">Ready to Chop</span></div>
-    </div>
-    <div class="chat-area">
-      <div class="chat-msgs" id="cb-msgs">${msgsHtml}</div>
-      <div class="csugg" style="padding:8px 12px 0;border-top:1px solid var(--border);overflow-x:auto;flex-wrap:nowrap">${CB_SUGG.map(s=>`<button class="csugg-btn" onclick="cbSugg(${JSON.stringify(s)})">${s}</button>`).join('')}</div>
-      <div class="chat-irow">
-        <textarea class="cinput" id="cb-inp" placeholder="Ask The Chop Bot anything…" rows="1"
-          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();cbSend()}"
-          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,88)+'px'"></textarea>
-        <button class="csend" id="cb-send" onclick="cbSend()">⚾</button>
-      </div>
-    </div>`;
-  cbScrollEnd();
-  setTimeout(()=>{cbBlink();cbState('idle');},700);
-}
-
-// ════════════════════════════════════════
-// SCORE PREDICTOR
-// ════════════════════════════════════════
-let predAtl=3,predOpp=2;
-
-function predGet(){try{return JSON.parse(localStorage.getItem('braves_preds')||'[]')}catch(e){return[]}}
-function predSave(p){localStorage.setItem('braves_preds',JSON.stringify(p))}
-
-function predSettle(){
-  const preds=predGet();
-  const d=DATA||SEED;
-  // Primary: use completedGames (10 games, has ISO date for exact matching)
-  // Fallback: use lastGame.recentResults
-  const completed=d.completedGames||[];
-  const recent=d.lastGame.recentResults||[];
-  let changed=false;
-  for(const p of preds){
-    if(p.settled)continue;
-    let match=null;
-    // Try ISO date match first (most reliable)
-    if(p.isoDate&&completed.length){
-      match=completed.find(g=>g.isoDate===p.isoDate&&g.opp===p.opp);
-    }
-    // Fall back to day-number + opponent match
-    if(!match){
-      const predDay=String(p.date.match(/\d+$/)?.[0]||'');
-      // Check completedGames (has ISO date: extract day from "2026-05-31")
-      match=completed.find(g=>{
-        const day=String(parseInt(g.isoDate?.split('-')[2]||'0'));
-        return g.opp===p.opp&&day===predDay;
-      });
-      // Last resort: check recentResults display dates
-      if(!match) match=recent.find(r=>r.opp===p.opp&&String(r.date.split(' ')[1])===predDay);
-    }
-    if(match){
-      const[atlA,oppA]=match.score.split('-').map(Number);
-      p.atlActual=atlA;p.oppActual=oppA;p.settled=true;
-      const ad=Math.abs(p.atlPick-atlA),od=Math.abs(p.oppPick-oppA);
-      const atlWon=atlA>oppA,pickWon=p.atlPick>p.oppPick;
-      if(ad===0&&od===0)p.result='exact';
-      else if(ad<=1&&od<=1)p.result='close';
-      else if(atlWon===pickWon)p.result='winner';
-      else p.result='miss';
-      changed=true;
-      HEALTH.fix(`Score predictor: settled ATL vs ${p.opp} on ${p.isoDate||p.date} — result: ${p.result}`);
-    }
-  }
-  if(changed)predSave(preds);
-  return preds;
-}
-
-function predAdjust(team,delta){
-  if(team==='atl')predAtl=Math.max(0,Math.min(20,predAtl+delta));
-  else predOpp=Math.max(0,Math.min(20,predOpp+delta));
-  const as=document.getElementById('pred-atl-s');
-  const os=document.getElementById('pred-opp-s');
-  if(as)as.textContent=predAtl;
-  if(os)os.textContent=predOpp;
-}
-
-function predLock(){
-  const d=DATA||SEED;
-  if(!d.nextGames[0])return;
-  const ng=d.nextGames[0];
-  const key=ng.opp+'-'+ng.date;
-  const preds=predGet();
-  if(preds.find(p=>p.key===key))return;
-  preds.unshift({key,opp:ng.opp,date:ng.date,isoDate:ng.isoDate||null,time:ng.time,
-    atlPick:predAtl,oppPick:predOpp,settled:false,result:null,atlActual:null,oppActual:null});
-  predSave(preds);
-  renderPredictor();
-}
-
-function predBadge(result){
-  const m={exact:['exact','🎯 Exact'],close:['close','🔥 Close'],winner:['winner','✅ Winner'],miss:['miss','❌ Miss'],pending:['pending','⏳ Pending']};
-  const[cls,label]=m[result]||m.pending;
-  return`<span class="pred-badge ${cls}">${label}</span>`;
-}
-
-function renderPredictor(){
-  const d=DATA||SEED;
-  const ng=d.nextGames[0];
-  const preds=predSettle();
-  const key=ng?ng.opp+'-'+ng.date:null;
-  const locked=key?preds.find(p=>p.key===key):null;
-  const settled=preds.filter(p=>p.settled);
-  const exact=settled.filter(p=>p.result==='exact').length;
-  const close=settled.filter(p=>p.result==='close').length;
-  const win=settled.filter(p=>p.result==='winner').length;
-
-  document.getElementById('content').innerHTML=`
-    <div class="pred-card">
-      <div class="ct" style="color:var(--green)">🎯 SCORE PREDICTOR</div>
-      ${ng?`
-        <div style="text-align:center;margin-bottom:16px">
-          <div style="font-family:'Anton',sans-serif;font-size:26px">ATL <span style="color:var(--dim);font-size:18px">vs</span> ${ng.opp}</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:4px">${ng.date} · ${ng.time}</div>
-          <div style="font-size:11px;color:var(--dim)">${ng.loc}</div>
-        </div>
-        ${locked?`
-          <div class="pred-locked">🔒 Locked in: <strong>ATL ${locked.atlPick} – ${ng.opp} ${locked.oppPick}</strong></div>
-          ${locked.settled
-            ?`<div style="text-align:center;margin-top:10px;font-size:14px">Final: ATL ${locked.atlActual} – ${ng.opp} ${locked.oppActual} &nbsp; ${predBadge(locked.result)}</div>`
-            :`<div style="text-align:center;margin-top:8px;font-size:12px;color:var(--dim)">Check back after the game ⚾</div>`}
-        `:`
-          <div class="pred-pickers">
-            <div class="pred-team">
-              <div class="pred-team-lbl">ATL</div>
-              <button class="pred-adj" onclick="predAdjust('atl',1)">▲</button>
-              <div class="pred-num" id="pred-atl-s">${predAtl}</div>
-              <button class="pred-adj" onclick="predAdjust('atl',-1)">▼</button>
-            </div>
-            <div style="font-family:'Anton',sans-serif;font-size:22px;color:var(--dim);padding-top:34px">VS</div>
-            <div class="pred-team">
-              <div class="pred-team-lbl">${ng.opp}</div>
-              <button class="pred-adj" onclick="predAdjust('opp',1)">▲</button>
-              <div class="pred-num" id="pred-opp-s">${predOpp}</div>
-              <button class="pred-adj" onclick="predAdjust('opp',-1)">▼</button>
-            </div>
+function pcCardHtml(p,type){
+  const isB=type==='b';
+  const photo=pcardPhoto(p.id);
+  const stats=isB?pcBatterStats(p):pcPitcherStats(p);
+  const badgeColor=isB?'var(--green)':(p.pos==='RP'?'#f87171':'#60a5fa');
+  const safeName=pcEsc(p.name);
+  return`
+    <div class="pcard" onclick="this.classList.toggle('flipped')">
+      <div class="pcard-inner">
+        <div class="pcard-face">
+          <div class="pcard-strip">
+            <span class="pcard-team">ATLANTA BRAVES</span>
+            ${p.jersey?`<span class="pcard-jersey">#${pcEsc(p.jersey)}</span>`:''}
           </div>
-          <button class="pred-lock-btn" onclick="predLock()">🔒 LOCK IT IN</button>
-        `}
-      `:`<div style="text-align:center;color:var(--dim);padding:20px">No upcoming game scheduled</div>`}
-    </div>
-    ${settled.length>0?`
-    <div class="card">
-      <div class="ct" style="color:var(--muted)">📊 YOUR ACCURACY</div>
-      <div class="sg">
-        <div class="sb"><div class="sl">PICKS</div><div class="sv">${settled.length}</div></div>
-        <div class="sb"><div class="sl">GOT WINNER</div><div class="sv" style="color:var(--green)">${exact+close+win}</div></div>
-        <div class="sb"><div class="sl">EXACT 🎯</div><div class="sv" style="color:var(--yellow)">${exact}</div></div>
+          <div class="pcard-flip-hint-front">↻</div>
+          <div class="pcard-photo${photo?'':' no-photo'}">${photo?`<img src="${photo}" alt="${safeName}" loading="lazy" onerror="this.parentElement.classList.add('no-photo');this.remove()">`:''}</div>
+          <div class="pcard-name-block">
+            <span class="pcard-pos-badge" style="background:${badgeColor}">${pcEsc(p.pos)}</span>
+            <div class="pcard-name">${safeName}</div>
+          </div>
+        </div>
+        <div class="pcard-back">
+          <div class="pcard-back-strip">
+            <div class="pcard-back-name">${safeName}</div>
+            <div class="pcard-back-meta"><span class="pcard-live-pulse"></span>LIVE · ${pcEsc(p.pos)}${p.jersey?` · #${pcEsc(p.jersey)}`:''}</div>
+          </div>
+          <div class="pcard-back-scroll" onclick="event.stopPropagation()" onwheel="event.stopPropagation()">${stats}</div>
+          <div class="pcard-flip-hint">TAP TO FLIP BACK</div>
+        </div>
       </div>
-    </div>`:''}
-    <div class="card">
-      <div class="ct" style="color:var(--muted)">🗒️ PAST PICKS</div>
-      ${preds.length===0
-        ?`<div style="text-align:center;color:var(--dim);padding:16px;font-size:13px">No picks yet — lock in your first prediction above!</div>`
-        :preds.map(p=>`
-          <div class="pred-row">
-            <div>
-              <div style="font-weight:700;font-size:14px">${p.date} · vs ${p.opp}</div>
-              <div style="font-size:12px;color:var(--muted);margin-top:2px">My pick: ATL ${p.atlPick}–${p.opp} ${p.oppPick}</div>
-              ${p.settled?`<div style="font-size:12px;color:var(--dim)">Final: ATL ${p.atlActual}–${p.opp} ${p.oppActual}</div>`:''}
-            </div>
-            ${predBadge(p.settled?p.result:'pending')}
-          </div>`).join('')}
     </div>`;
+}
+
+function renderCards(d){
+  const batters=(d.batters||[]).slice(0,10);
+  const starters=(d.pitchers||[]).filter(p=>p.pos==='SP').slice(0,6);
+  const bullpen=(d.pitchers||[]).filter(p=>p.pos==='RP').slice(0,6);
+  const lastSync=stamp();
+
+  const section=(title,color,emoji,players,type)=>
+    players.length?`
+      <div class="card" style="margin-bottom:14px">
+        <div class="ct" style="color:${color}">${emoji} ${title}</div>
+        <div style="font-size:10px;color:var(--dim);letter-spacing:1px;margin-bottom:10px">Tap a card to flip · stats refresh every 2 min · last sync ${lastSync}</div>
+        <div class="cards-grid">${players.map(p=>pcCardHtml(p,type)).join('')}</div>
+      </div>`:'';
+
+  document.getElementById('content').innerHTML=`
+    <div class="card" style="background:linear-gradient(135deg,#0d1a0f,#0a1628);border-color:#22c55e44">
+      <div class="ct" style="color:var(--green)">🎴 PLAYER CARDS</div>
+      <div class="cards-intro">Original Braves trading-card design. Photos via MLB's public headshot CDN. <strong>Tap any card to flip</strong> and see live stats — colors compare each stat to the MLB average (green = better, yellow = near average, red = below).</div>
+    </div>
+    ${section('TOP BATTERS · OPS LEADERS','var(--green)','🏏',batters,'b')}
+    ${section('STARTING ROTATION','#60a5fa','🎯',starters,'p')}
+    ${section('BULLPEN','#f87171','🔒',bullpen,'p')}
+  `;
 }
 
 // ── HEALTH DASHBOARD UI ──
@@ -1527,7 +1448,7 @@ function showHealth(){
   const systems=[
     {name:'Live Scores & Standings',dot:s.errs===0?'var(--green)':'var(--crimson)',status:s.errs===0?'Syncing normally':'Errors detected'},
     {name:'Player Stats (Batting)',dot:s.lastSyncPlayers>0?'var(--green)':'var(--yellow)',status:s.lastSyncPlayers>0?`${s.lastSyncPlayers} players loaded`:'Using seed data'},
-    {name:'Score Predictor',dot:'var(--green)',status:'Storing picks locally'},
+    {name:'Live Weather',dot:'var(--green)',status:'Open-Meteo · 5-day forecast'},
     {name:'Auto-refresh Timer',dot:refreshTimer?'var(--green)':'var(--crimson)',status:refreshTimer?'Running every 2 min':'Stopped'},
     {name:'Network',dot:'var(--green)',status:navigator.onLine?'Online':'Offline'},
     {name:'Last Sync',dot:'var(--green)',status:lastSyncAgo},
@@ -1633,20 +1554,6 @@ setInterval(()=>{
     HEALTH.fix('AI insight stuck on spinner — replaced with static fallback');
   }
 },60*1000);
-
-// ── LOCALSTORAGE INTEGRITY CHECK ──
-(()=>{
-  try{
-    const preds=localStorage.getItem('braves_preds');
-    if(preds){
-      const p=JSON.parse(preds);
-      if(!Array.isArray(p))throw new Error('not an array');
-    }
-  }catch(e){
-    localStorage.removeItem('braves_preds');
-    HEALTH.fix(`Score predictor data was corrupted — reset to clean state (${e.message})`);
-  }
-})();
 
 // ── BOOT ──
 HEALTH.info('Dashboard initialised — beginning first sync');
