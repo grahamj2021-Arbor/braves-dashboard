@@ -568,7 +568,7 @@ function mergeLiveData(seed,live){
       const rec={name:tr.team.name,abbr,w:tr.wins,l:tr.losses};
       allTeams.push(rec);
       if(isNL) nlTeams.push(rec);
-      if(isNLE) divTeams.push(rec);
+      divTeams.push(rec);
       if(tr.team.id===ATL_ID){
         d.record.w=tr.wins; d.record.l=tr.losses;
         d.record.pct=tr.winningPercentage||pct(tr.wins,tr.losses);
