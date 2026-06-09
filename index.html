@@ -558,6 +558,7 @@ function mergeLiveData(seed,live){
   // ── Standings ──
   const allTeams=[];
   const nlTeams=[];
+  const allDivs=[];
   for(const div of live.standings.records||[]){
     const isNLE=div.division?.id===NLE_DIV;
     const isNL=div.league?.id===104;
@@ -585,13 +586,22 @@ function mergeLiveData(seed,live){
         d.matchup[3].atl=d.record.runDiff;
       }
     }
-    if(isNLE&&divTeams.length){
+    if(divTeams.length){
       divTeams.sort((a,b)=>(b.w/(b.w+b.l))-(a.w/(a.w+a.l)));
-      d.nle=divTeams;
+      const divName=({200:'AL West',201:'AL East',202:'AL Central',203:'NL West',204:'NL East',205:'NL Central'})[div.division?.id]||(div.division?.name||'Division');
+      const leagueName=div.league?.id===104?'NL':div.league?.id===103?'AL':'';
+      allDivs.push({id:div.division?.id,name:divName,league:leagueName,teams:divTeams});
+      if(isNLE) d.nle=divTeams;
     }
   }
   if(allTeams.length){
-    d.mlbTop=[...allTeams].sort((a,b)=>(b.w/(b.w+b.l))-(a.w/(a.w+a.l))).slice(0,8);
+    d.mlbTop=[...allTeams].sort((a,b)=>(b.w/(b.w+b.l))-(a.w/(a.w+a.l))).slice(0,10);
+  }
+  if(allDivs.length){
+    // Stable, friendly ordering: AL E/C/W then NL E/C/W
+    const order=[201,202,200,204,205,203];
+    allDivs.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));
+    d.divisions=allDivs;
   }
   // ── Live rankings (drive dynamic NL East / NL win-% subtitles) ──
   const nleIdx=(d.nle||[]).findIndex(t=>t.abbr==='ATL');
@@ -1052,6 +1062,50 @@ function renderStats(d){
       <div style="font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:8px">MLB AVG → 4.20 ERA / 1.28 WHIP / 8.8 K/9</div>
       <div class="plist">${d.pitchers.map(p=>`<div class="prow"><div class="ptop"><div class="prn">${p.name}</div><span class="prp ${p.pos.toLowerCase()}">${p.pos}</span></div><div class="prstats"><div class="pri"><div class="pril">ERA</div>${badge(p.era,MLB_PIT.era,true,v=>v.toFixed(2))}</div><div class="pri"><div class="pril">WHIP</div>${badge(p.whip,MLB_PIT.whip,true,v=>v.toFixed(2))}</div><div class="pri"><div class="pril">K/9</div>${badge(p.k9,MLB_PIT.k9,false,v=>v.toFixed(1))}</div><div class="pri"><div class="pril">BB/9</div>${badge(p.bb9,MLB_PIT.bb9,true,v=>v.toFixed(1))}</div><div class="pri"><div class="pril">FIP</div>${badge(p.fip,MLB_PIT.fip,true,v=>v.toFixed(2))}</div><div class="pri"><div class="pril">${p.pos==='RP'?'SV':'W'}</div><span class="badge bg">${p.pos==='RP'?p.sv:p.w}</span></div></div></div>`).join('')}</div>
     </div>`;
+}
+
+// ── STANDINGS ──
+function renderStandings(d){
+  const nle=d.nle||[];
+  const top=nle[0]||{w:0,l:0};
+  const mlbTop=[...(d.mlbTop||[])].sort((a,b)=>(b.w/(b.w+b.l))-(a.w/(a.w+a.l)));
+  const divisions=d.divisions||[];
+
+  const divTable=(div)=>{
+    const leader=div.teams[0]||{w:0,l:0};
+    return`<div class="card" style="margin-bottom:12px">
+      <div class="ct" style="color:${div.league==='NL'?'var(--green)':'#60a5fa'}">${div.name}</div>
+      <table class="stbl">
+        <thead><tr><th>TEAM</th><th>W</th><th>L</th><th>PCT</th><th>GB</th></tr></thead>
+        <tbody>${div.teams.map((t,i)=>`<tr class="${t.abbr==='ATL'?'me':''}"><td>${i===0?'🥇 ':''}${t.abbr==='ATL'?`<strong>${t.name}</strong>`:t.name}</td><td style="color:var(--green)">${t.w}</td><td style="color:var(--crimson)">${t.l}</td><td>${pct(t.w,t.l)}</td><td style="color:var(--muted)">${gb(leader.w,leader.l,t.w,t.l)}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  };
+
+  // Find ATL within the MLB top list to show position
+  const atlMlbIdx=mlbTop.findIndex(t=>t.abbr==='ATL');
+  const atlMlbRank=atlMlbIdx>=0?atlMlbIdx+1:null;
+
+  document.getElementById('content').innerHTML=`
+    <div class="card">
+      <div class="ct" style="color:var(--green)">🏆 NL EAST · LIVE STANDINGS</div>
+      <div style="font-size:10px;color:var(--dim);letter-spacing:1px;margin-bottom:10px">Refreshes every 2 min · last sync ${stamp()}</div>
+      <table class="stbl">
+        <thead><tr><th>TEAM</th><th>W</th><th>L</th><th>PCT</th><th>GB</th></tr></thead>
+        <tbody>${nle.map((t,i)=>`<tr class="${t.abbr==='ATL'?'me':''}"><td>${i===0?'🥇 ':''}${t.abbr==='ATL'?`<strong>${t.name}</strong>`:t.name}</td><td style="color:var(--green)">${t.w}</td><td style="color:var(--crimson)">${t.l}</td><td>${pct(t.w,t.l)}</td><td style="color:var(--muted)">${gb(top.w,top.l,t.w,t.l)}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>
+    <div class="card" style="border-color:#60a5fa33">
+      <div class="ct" style="color:#60a5fa">📊 MLB TOP TEAMS · WIN %</div>
+      ${atlMlbRank?`<div style="font-size:11px;color:var(--muted);margin-bottom:8px">🪓 Braves rank <strong style="color:var(--green)">#${atlMlbRank}</strong> in MLB</div>`:''}
+      ${mlbTop.map((t,i)=>{const p=t.w/(t.w+t.l);return`<div class="rbrow"><span class="rbn">#${i+1}</span><span class="rbnm" style="${t.abbr==='ATL'?'color:var(--green);font-weight:700':''}">${t.abbr==='ATL'?'🪓 ':''}${t.name} <span style="color:var(--dim);font-family:JetBrains Mono,monospace;font-size:11px">(${t.w}-${t.l})</span></span><div class="rbw"><div class="rbb" style="width:${p*100}%;background:${t.abbr==='ATL'?'var(--green)':'#60a5fa'}"></div></div><span class="rbp" style="${t.abbr==='ATL'?'color:var(--green)':''}">${pct(t.w,t.l)}</span></div>`}).join('')}
+    </div>
+    ${divisions.length?`<div class="card" style="border-color:#facc1533">
+      <div class="ct" style="color:var(--yellow)">🗺️ EVERY DIVISION</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">All six divisions · live from MLB statsapi · auto-refresh every 2 min</div>
+      ${divisions.filter(div=>div.id!==NLE_DIV).map(divTable).join('')}
+    </div>`:''}
+  `;
 }
 
 // ════════════════════════════════════════
