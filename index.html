@@ -1049,19 +1049,8 @@ function renderOverview(d){
   const tb=d.batters.length?d.batters.reduce((a,b)=>b.ops>a.ops?b:a):null;
   const spList=d.pitchers.filter(p=>p.pos==='SP');
   const tp=spList.length?spList.reduce((a,b)=>b.era<a.era?b:a):(d.pitchers.length?d.pitchers[0]:null);
-  const pitPool=spList.length?spList:d.pitchers;
-  const topBatters=d.batters.length?[
-    {cat:'HR',label:'HR Leader',p:d.batters.reduce((a,b)=>b.hr>a.hr?b:a)},
-    {cat:'RBI',label:'RBI Leader',p:d.batters.reduce((a,b)=>b.rbi>a.rbi?b:a)},
-    {cat:'OPS',label:'OPS Leader',p:d.batters.reduce((a,b)=>b.ops>a.ops?b:a)}
-  ]:[];
-  const topPitchers=pitPool.length?[
-    {cat:'ERA',label:'ERA Leader',p:pitPool.reduce((a,b)=>b.era<a.era?b:a)},
-    {cat:'W',label:'Wins Leader',p:pitPool.reduce((a,b)=>b.w>a.w?b:a)},
-    {cat:'WHIP',label:'WHIP Leader',p:pitPool.reduce((a,b)=>b.whip<a.whip?b:a)}
-  ]:[];
-  if(!tb)HEALTH.warn('No batting data available for overview — batter cards hidden');
-  if(!tp)HEALTH.warn('No pitching data available for overview — pitcher cards hidden');
+  if(!tb)HEALTH.warn('No batting data available for overview — batter card hidden');
+  if(!tp)HEALTH.warn('No pitching data available for overview — pitcher card hidden');
   // Dynamic subtitles — driven by live standings rankings
   const ord=n=>n==null?'':(['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th'][n-1]||`${n}th`);
   const nleSub=d.record.nleRank?`${ord(d.record.nleRank)} NL East`:'NL East';
@@ -1092,16 +1081,27 @@ function renderOverview(d){
         <div class="sb"><div class="sl">RUN +/-</div><div class="sv" style="color:${rdColor}">${d.record.runDiff}</div><div class="ss">Differential</div></div>
       </div>
     </div>
-    ${topBatters.map(({cat,label,p:b})=>`<div class="ph bat">
-      <div class="ct" style="color:var(--green)">🏆 TOP BATTER · ${cat} <span style="font-size:9px;color:${d._liveSource?'var(--green)':'var(--yellow)'}">● ${d._liveSource?'LIVE':'SEED'}</span></div>
-      <div class="pn">${b.name}</div><div class="pp">${b.pos} · ${label} · Updated ${stamp()}</div>
-      <div class="ps">${[['AVG',b.avg.toFixed(3),MLB_BAT.avg,false],['OPS',b.ops.toFixed(3),MLB_BAT.ops,false],['HR',b.hr,MLB_BAT.hr,false],['RBI',b.rbi,MLB_BAT.rbi,false],['OBP',b.obp.toFixed(3),MLB_BAT.obp,false],['SB',b.sb,MLB_BAT.sb,false]].map(([l,v,a,low])=>`<div class="psi"><div class="psl">${l}</div><div class="psv" style="color:${sc(parseFloat(v),a,low)}">${v}</div></div>`).join('')}</div>
-    </div>`).join('')}
-    ${topPitchers.map(({cat,label,p})=>`<div class="ph pit">
-      <div class="ct" style="color:var(--red)">🎯 ACE PITCHER · ${cat} <span style="font-size:9px;color:${d._liveSource?'var(--green)':'var(--yellow)'}">● ${d._liveSource?'LIVE':'SEED'}</span></div>
-      <div class="pn">${p.name}</div><div class="pp">${p.pos} · ${label} · Updated ${stamp()}</div>
-      <div class="ps">${[['ERA',p.era.toFixed(2),MLB_PIT.era,true],['WHIP',p.whip.toFixed(2),MLB_PIT.whip,true],['K/9',p.k9.toFixed(1),MLB_PIT.k9,false],['BB/9',p.bb9.toFixed(1),MLB_PIT.bb9,true],['FIP',p.fip.toFixed(2),MLB_PIT.fip,true],['W',p.w,6,false]].map(([l,v,a,low])=>`<div class="psi"><div class="psl">${l}</div><div class="psv" style="color:${sc(parseFloat(v),a,low)}">${v}</div></div>`).join('')}</div>
-    </div>`).join('')}
+    <div class="card">
+      <div class="ct" style="color:var(--green)">🏆 TOP PERFORMERS <span style="font-size:9px;color:${d._liveSource?'var(--green)':'var(--yellow)'}">● ${d._liveSource?'LIVE':'SEED'}</span></div>
+      <div class="plist">
+        ${tb?`<div class="prow">
+          <div class="ptop"><div class="prn">${tb.name}</div><span class="prp bat">TOP BATTER</span></div>
+          <div class="prstats" style="grid-template-columns:repeat(3,1fr)">
+            <div class="pri"><div class="pril">HR</div>${badge(tb.hr,MLB_BAT.hr,false,v=>v)}</div>
+            <div class="pri"><div class="pril">RBI</div>${badge(tb.rbi,MLB_BAT.rbi,false,v=>v)}</div>
+            <div class="pri"><div class="pril">OPS</div>${badge(tb.ops,MLB_BAT.ops,false,v=>v.toFixed(3))}</div>
+          </div>
+        </div>`:''}
+        ${tp?`<div class="prow">
+          <div class="ptop"><div class="prn">${tp.name}</div><span class="prp ${tp.pos.toLowerCase()}">TOP PITCHER</span></div>
+          <div class="prstats" style="grid-template-columns:repeat(3,1fr)">
+            <div class="pri"><div class="pril">ERA</div>${badge(tp.era,MLB_PIT.era,true,v=>v.toFixed(2))}</div>
+            <div class="pri"><div class="pril">W</div><span class="badge bg">${tp.w}</span></div>
+            <div class="pri"><div class="pril">WHIP</div>${badge(tp.whip,MLB_PIT.whip,true,v=>v.toFixed(2))}</div>
+          </div>
+        </div>`:''}
+      </div>
+    </div>
 
     <div class="card" style="background:linear-gradient(135deg,#0a1628,#0d1f2a);border-color:#38bdf844;position:relative;overflow:hidden">
       <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#38bdf8,#0ea5e9)"></div>
