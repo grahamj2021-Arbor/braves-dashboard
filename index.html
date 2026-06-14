@@ -978,28 +978,10 @@ async function refreshAll(){
   const lbl=document.getElementById('refresh-label');
   if(pill) pill.classList.remove('live');
   if(lbl) lbl.textContent='Updating…';
-  // fetch live MLB data and AI insight in parallel
   clearTimeout(aiInsightTimer);
-  const [liveResult]=await Promise.allSettled([
-    fetchLiveData(),
-    fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({messages:[{role:'user',content:(()=>{const d=DATA||SEED;const tb=d.batters.length?d.batters.reduce((a,b)=>b.ops>a.ops?b:a):null;const sp=d.pitchers.filter(p=>p.pos==='SP');const tp=sp.length?sp.reduce((a,b)=>b.era<a.era?b:a):null;const _ord=n=>n==null?'1st':(['1st','2nd','3rd','4th','5th'][n-1]||`${n}th`);return`Hot take: 2026 Braves are ${d.record.w}-${d.record.l}, ${_ord(d.record.nleRank)} NL East. Top batter: ${tb?tb.name+' '+tb.ops.toFixed(3)+' OPS':'—'}. Ace: ${tp?tp.name+' '+tp.era.toFixed(2)+' ERA':'—'}. Last 3: ${(d.lastGame?.recentResults||[]).slice(-3).map(r=>`${r.r} vs ${r.opp} ${r.score}`).join(', ')||'recent W'}. Two punchy analyst sentences. No markdown.`})()}]})})
-      .then(r=>r.json()).then(r=>{
-        if(r.text){aiInsightCache=r.text;const el=document.querySelector('.ait');if(el)el.textContent=r.text;}
-      })
-      .catch(e=>HEALTH.warn(`AI insight fetch failed: ${e.message}`))
-  ]);
-  // fallback: if insight still loading after 12s, show static text
-  aiInsightTimer=setTimeout(()=>{
-    const el=document.querySelector('.ait');
-    if(el&&el.querySelector('.spin')){
-      const d=DATA||SEED;
-      const _ord=n=>n==null?'atop':(n===1?'atop':`${(['1st','2nd','3rd','4th','5th'][n-1]||n+'th')} in`);
-      const fb=`Braves sit ${d.record.w}-${d.record.l}, ${_ord(d.record.nleRank)} the NL East — elite pitching and a red-hot lineup keep them in the mix. The Chop is very much alive in 2026.`;
-      el.textContent=fb; aiInsightCache=fb;
-      HEALTH.fix('AI insight timed out — showing static fallback');
-    }
-  },12000);
+  // 1) fetch live MLB data FIRST so the AI Analyst prompt uses fresh stats,
+  //    not last cycle's data (or SEED on first open).
+  const liveResult=await fetchLiveData().then(v=>({status:'fulfilled',value:v}),e=>({status:'rejected',reason:e}));
   if(liveResult.status==='fulfilled'){
     DATA=mergeLiveData(SEED,liveResult.value);
     HEALTH.ok(`Live sync — ${DATA.record.w}-${DATA.record.l} · ${DATA.batters.length} batters · ${DATA.pitchers.length} pitchers`,DATA.batters.length);
@@ -1007,6 +989,31 @@ async function refreshAll(){
     DATA=SEED;
     HEALTH.fix(`Live fetch failed (${liveResult.reason?.message||'unknown'}) — using SEED fallback`);
   }
+  // 2) build AI Analyst prompt from the now-fresh DATA and fire it (don't block).
+  const d=DATA;
+  const tb=d.batters.length?d.batters.reduce((a,b)=>b.ops>a.ops?b:a):null;
+  const sp=d.pitchers.filter(p=>p.pos==='SP');
+  const tp=sp.length?sp.reduce((a,b)=>b.era<a.era?b:a):null;
+  const _ord=n=>n==null?'1st':(['1st','2nd','3rd','4th','5th'][n-1]||`${n}th`);
+  const last3=(d.lastGame?.recentResults||[]).slice(-3).map(r=>`${r.r} vs ${r.opp} ${r.score}`).join(', ')||'recent W';
+  const systemContext=`${d.record.w}-${d.record.l} (.${String(Math.round((d.record.pct||0)*1000)).padStart(3,'0')}), ${_ord(d.record.nleRank)} NL East. Top batter: ${tb?tb.name+' '+tb.ops.toFixed(3)+' OPS':'—'}. Ace: ${tp?tp.name+' '+tp.era.toFixed(2)+' ERA':'—'}. Last 3: ${last3}.`;
+  const userPrompt=`Hot take: 2026 Braves are ${d.record.w}-${d.record.l}, ${_ord(d.record.nleRank)} NL East. Top batter: ${tb?tb.name+' '+tb.ops.toFixed(3)+' OPS':'—'}. Ace: ${tp?tp.name+' '+tp.era.toFixed(2)+' ERA':'—'}. Last 3: ${last3}. Two punchy analyst sentences. No markdown.`;
+  fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({messages:[{role:'user',content:userPrompt}],systemContext})})
+    .then(r=>r.json()).then(r=>{
+      if(r.text){aiInsightCache=r.text;const el=document.querySelector('.ait');if(el)el.textContent=r.text;}
+    })
+    .catch(e=>HEALTH.warn(`AI insight fetch failed: ${e.message}`));
+  // fallback: if insight still loading after 12s, show static text built from fresh DATA
+  aiInsightTimer=setTimeout(()=>{
+    const el=document.querySelector('.ait');
+    if(el&&el.querySelector('.spin')){
+      const _ord2=n=>n==null?'atop':(n===1?'atop':`${(['1st','2nd','3rd','4th','5th'][n-1]||n+'th')} in`);
+      const fb=`Braves sit ${d.record.w}-${d.record.l}, ${_ord2(d.record.nleRank)} the NL East — elite pitching and a red-hot lineup keep them in the mix. The Chop is very much alive in 2026.`;
+      el.textContent=fb; aiInsightCache=fb;
+      HEALTH.fix('AI insight timed out — showing static fallback');
+    }
+  },12000);
   // update header record live
   const rec=document.getElementById('hdr-rec');
   const sub=document.getElementById('hdr-rec-sub');
