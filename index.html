@@ -1018,7 +1018,7 @@ async function refreshAll(){
   const rec=document.getElementById('hdr-rec');
   const sub=document.getElementById('hdr-rec-sub');
   if(rec) rec.textContent=`${DATA.record.w}-${DATA.record.l}`;
-  if(sub) sub.textContent=`1ST · NL EAST · ${DATA.record.pct}`;
+  if(sub) sub.textContent=`${_ord(DATA.record.nleRank).toUpperCase()} · NL EAST · ${DATA.record.pct}`;
   const upEl=document.getElementById('last-updated');
   if(upEl) upEl.textContent=`Updated ${stamp()}`;
   if(pill) pill.classList.add('live');
