@@ -535,7 +535,7 @@ async function fetchLiveData(){
     HEALTH.safeFetch(`${base}/schedule?sportId=1&teamId=${ATL_ID}&startDate=${seasonStart}&endDate=${seasonEnd}&gameType=R`).catch(()=>null),
     HEALTH.safeFetch(`${base}/teams/stats?sportId=1&stats=season&season=${season}&group=hitting&gameType=R`).catch(()=>null),
     HEALTH.safeFetch(`${base}/teams/stats?sportId=1&stats=season&season=${season}&group=pitching&gameType=R`).catch(()=>null),
-    HEALTH.safeFetch(`${espnBase}/teams/15/news?limit=12`).catch(()=>null),
+    HEALTH.safeFetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/news?teams=15&limit=12`).catch(()=>null),
     HEALTH.safeFetch(`${base}/teams/${ATL_ID}/roster?rosterType=40Man&season=${season}`).catch(()=>null)
   ]);
 
@@ -739,9 +739,13 @@ function mergeLiveData(seed,live){
     posMap[p.person.id]=p.position?.abbreviation||'—';
     if(p.jerseyNumber)jerseyMap[p.person.id]=p.jerseyNumber;
   }
-  // 40-man roster whitelist — excludes traded/released players from all displays
-  const roster40Set=new Set((live.roster40Man?.roster||[]).map(p=>p.person.id));
-  if(roster40Set.size>0) HEALTH.ok(`40-man roster: ${roster40Set.size} players whitelisted`);
+  // Build whitelist: prefer 40-man roster; fall back to active 26-man (posMap) so
+  // traded/released players (who have no roster entry) are always excluded.
+  const roster40Ids=(live.roster40Man?.roster||[]).map(p=>p.person.id);
+  const rosterSet=roster40Ids.length>0
+    ? new Set(roster40Ids)
+    : new Set(Object.keys(posMap).map(Number));
+  HEALTH.ok(`Roster whitelist: ${rosterSet.size} players (${roster40Ids.length>0?'40-man':'active-26 fallback'})`);
 
   const fp=v=>parseFloat(String(v||'0').replace(/[^0-9.\-]/g,''))||0;
 
@@ -775,7 +779,7 @@ function mergeLiveData(seed,live){
           triples:s.stat.triples||0,
         };
       })
-      .filter(b=>b.ops>0&&(!b.id||!roster40Set.size||roster40Set.has(b.id)))
+      .filter(b=>b.ops>0&&(!b.id||!rosterSet.size||rosterSet.has(b.id)))
       .sort((a,b)=>b.ops-a.ops)
       .slice(0,12);
     if(batters.length>0){
@@ -829,7 +833,7 @@ function mergeLiveData(seed,live){
           gs:gs,
         };
       })
-      .filter(p=>p.era>=0&&(!p.id||!roster40Set.size||roster40Set.has(p.id)))
+      .filter(p=>p.era>=0&&(!p.id||!rosterSet.size||rosterSet.has(p.id)))
       .sort((a,b)=>{if(a.pos!==b.pos)return a.pos==='SP'?-1:1;return a.era-b.era;})
       .slice(0,12);
     if(pitchers.length>0){
@@ -996,16 +1000,20 @@ function mergeLiveData(seed,live){
   }
 
   // ── ESPN Analyst Feed ──
-  if(live.news?.articles?.length){
-    d.news=(live.news.articles||[]).slice(0,12).map(a=>({
-      headline:a.headline||'',
-      desc:a.description||'',
-      byline:a.byline||'',
-      published:a.published||'',
-      url:a.links?.web?.href||null
+  // ESPN API may return articles at top level or nested under 'news'
+  const rawArticles=live.news?.articles||live.news?.news?.articles||[];
+  if(rawArticles.length){
+    d.news=rawArticles.slice(0,12).map(a=>({
+      headline:a.headline||a.title||'',
+      desc:a.description||a.summary||'',
+      byline:a.byline||a.source?.name||'',
+      published:a.published||a.lastModified||'',
+      url:a.links?.web?.href||a.link||a.url||null
     }));
     HEALTH.ok(`Analyst feed: ${d.news.length} articles loaded`);
-  }else{HEALTH.warn('ESPN news fetch failed — analyst feed empty');}
+  }else{
+    HEALTH.warn(`ESPN news fetch failed — live.news keys: ${live.news?Object.keys(live.news).join(','):'null'}`);
+  }
 
   return d;
 }
