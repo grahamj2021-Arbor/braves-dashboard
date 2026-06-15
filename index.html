@@ -524,7 +524,7 @@ async function fetchLiveData(){
   const LAT=33.891, LON=-84.468;
 
   // First parallel wave: primary data sources
-  const [sr,gr,br,pr,rr,er,wr,ssr,lbr,lpr,nr]=await Promise.all([
+  const [sr,gr,br,pr,rr,er,wr,ssr,lbr,lpr,nr,r40r]=await Promise.all([
     HEALTH.safeFetch(`${base}/standings?leagueId=103,104&season=${season}&standingsTypes=regularSeason&hydrate=team,records`),
     HEALTH.safeFetch(`${base}/schedule?sportId=1&teamId=${ATL_ID}&startDate=${start}&endDate=${end}&hydrate=linescore,team,decisions`),
     HEALTH.safeFetch(`${base}/stats?stats=season&group=hitting&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=60&sportId=1&gameType=R`).catch(()=>null),
@@ -535,7 +535,8 @@ async function fetchLiveData(){
     HEALTH.safeFetch(`${base}/schedule?sportId=1&teamId=${ATL_ID}&startDate=${seasonStart}&endDate=${seasonEnd}&gameType=R`).catch(()=>null),
     HEALTH.safeFetch(`${base}/teams/stats?sportId=1&stats=season&season=${season}&group=hitting&gameType=R`).catch(()=>null),
     HEALTH.safeFetch(`${base}/teams/stats?sportId=1&stats=season&season=${season}&group=pitching&gameType=R`).catch(()=>null),
-    HEALTH.safeFetch(`${espnBase}/teams/15/news?limit=12`).catch(()=>null)
+    HEALTH.safeFetch(`${espnBase}/teams/15/news?limit=12`).catch(()=>null),
+    HEALTH.safeFetch(`${base}/teams/${ATL_ID}/roster?rosterType=40Man&season=${season}`).catch(()=>null)
   ]);
 
   // Parse schedule early so we can find last game ID for boxscore fetch
@@ -548,7 +549,7 @@ async function fetchLiveData(){
   }
 
   // Second parallel wave: remaining JSON + boxscore for last game
-  const [standingsJ,battingJ,pitchingJ,rosterJ,espnJ,weatherJ,seasonScheduleJ,leagueBatJ,leaguePitJ,boxscoreJ,newsJ]=await Promise.all([
+  const [standingsJ,battingJ,pitchingJ,rosterJ,espnJ,weatherJ,seasonScheduleJ,leagueBatJ,leaguePitJ,boxscoreJ,newsJ,roster40ManJ]=await Promise.all([
     sr.json(),
     br?br.json():Promise.resolve(null),
     pr?pr.json():Promise.resolve(null),
@@ -559,7 +560,8 @@ async function fetchLiveData(){
     lbr?lbr.json().catch(()=>null):Promise.resolve(null),
     lpr?lpr.json().catch(()=>null):Promise.resolve(null),
     lastGamePk?HEALTH.safeFetch(`${base}/game/${lastGamePk}/boxscore`).then(r=>r.json()).catch(()=>null):Promise.resolve(null),
-    nr?nr.json().catch(()=>null):Promise.resolve(null)
+    nr?nr.json().catch(()=>null):Promise.resolve(null),
+    r40r?r40r.json().catch(()=>null):Promise.resolve(null)
   ]);
 
   return{
@@ -568,6 +570,7 @@ async function fetchLiveData(){
     batting:battingJ,
     pitching:pitchingJ,
     roster:rosterJ,
+    roster40Man:roster40ManJ,
     espn:espnJ,
     weather:weatherJ,
     seasonSchedule:seasonScheduleJ,
@@ -736,6 +739,9 @@ function mergeLiveData(seed,live){
     posMap[p.person.id]=p.position?.abbreviation||'—';
     if(p.jerseyNumber)jerseyMap[p.person.id]=p.jerseyNumber;
   }
+  // 40-man roster whitelist — excludes traded/released players from all displays
+  const roster40Set=new Set((live.roster40Man?.roster||[]).map(p=>p.person.id));
+  if(roster40Set.size>0) HEALTH.ok(`40-man roster: ${roster40Set.size} players whitelisted`);
 
   const fp=v=>parseFloat(String(v||'0').replace(/[^0-9.\-]/g,''))||0;
 
@@ -769,7 +775,7 @@ function mergeLiveData(seed,live){
           triples:s.stat.triples||0,
         };
       })
-      .filter(b=>b.ops>0)
+      .filter(b=>b.ops>0&&(!b.id||!roster40Set.size||roster40Set.has(b.id)))
       .sort((a,b)=>b.ops-a.ops)
       .slice(0,12);
     if(batters.length>0){
@@ -823,7 +829,7 @@ function mergeLiveData(seed,live){
           gs:gs,
         };
       })
-      .filter(p=>p.era>=0)
+      .filter(p=>p.era>=0&&(!p.id||!roster40Set.size||roster40Set.has(p.id)))
       .sort((a,b)=>{if(a.pos!==b.pos)return a.pos==='SP'?-1:1;return a.era-b.era;})
       .slice(0,12);
     if(pitchers.length>0){
