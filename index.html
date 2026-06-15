@@ -1084,7 +1084,7 @@ function renderOverview(d){
   const nleSub=d.record.nleRank?`${ord(d.record.nleRank)} NL East`:'NL East';
   const nlSub=d.record.nlRank===1?'Best in NL':d.record.nlRank?`${ord(d.record.nlRank)} in NL`:'NL Win %';
   const recColor=d.record.nleRank===1?'var(--green)':d.record.nleRank===2?'var(--yellow)':'var(--crimson)';
-  const wpctColor=d.record.nlRank===1?'var(--green)':d.record.nlRank<=4?'var(--yellow)':'var(--crimson)';
+  const wpctColor=d.record.nlRank===1?'var(--green)':d.record.nlRank&&d.record.nlRank<=4?'var(--yellow)':'var(--crimson)';
   const homePct=(()=>{const[hw,hl]=String(d.record.home||'0-0').split('-').map(Number);return(hw+hl)?hw/(hw+hl):0;})();
   const awayPct=(()=>{const[aw,al]=String(d.record.away||'0-0').split('-').map(Number);return(aw+al)?aw/(aw+al):0;})();
   const l10Pct=(()=>{const[lw,ll]=String(d.record.last10||'0-0').split('-').map(Number);return(lw+ll)?lw/(lw+ll):0;})();
@@ -1097,7 +1097,7 @@ function renderOverview(d){
     ?d.news.map(a=>{
         const ta=_timeAgo(a.published);
         const bl=a.byline?`<span class="social-byline">${a.byline}</span>`:'';
-        const onclick=a.url?`onclick="window.open(${JSON.stringify(a.url)},'_blank',{noreferrer:true})"`:'' ;
+        const onclick=a.url?`onclick="window.open(${JSON.stringify(a.url)},'_blank','noopener,noreferrer')"`:'';
         return`<div class="social-item" ${onclick}>
           <div class="social-meta"><span class="social-badge">ESPN</span>${bl}${ta?`<span class="social-time">· ${ta}</span>`:''}</div>
           <div class="social-hdl">${a.headline}</div>
