@@ -249,6 +249,18 @@
     .pcard-stat-avg{font-size:9px;color:var(--dim);font-family:'JetBrains Mono',monospace}
     .pcard-flip-hint{font-size:9px;color:var(--dim);text-align:center;padding:6px 0 8px;letter-spacing:1.5px;border-top:1px solid rgba(34,197,94,.1)}
     .pcard-live-pulse{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite;margin-right:5px;vertical-align:middle}
+    /* ANALYST SOCIAL FEED */
+    .social-feed{display:flex;flex-direction:column;overflow-y:auto;max-height:360px;-webkit-overflow-scrolling:touch;margin:-4px 0}
+    .social-feed::-webkit-scrollbar{display:none}
+    .social-item{padding:12px 2px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;-webkit-tap-highlight-color:transparent}
+    .social-item:last-child{border-bottom:none}
+    .social-item:active{background:#38bdf808}
+    .social-meta{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+    .social-badge{font-size:9px;font-weight:900;padding:2px 6px;border-radius:3px;letter-spacing:.5px;text-transform:uppercase;flex-shrink:0;background:#cc0000;color:#fff}
+    .social-time{font-size:10px;color:var(--dim)}
+    .social-byline{font-size:10px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+    .social-hdl{font-size:13px;font-weight:700;line-height:1.4;color:var(--text);margin-bottom:3px}
+    .social-desc{font-size:11px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   </style>
 </head>
 <body>
@@ -297,7 +309,7 @@
 // from the MLB team-wide stats endpoint (all 30 teams aggregated).
 const MLB_BAT={avg:.248,obp:.318,slg:.413,ops:.731,hr:14,rbi:52,sb:8,_live:false};
 const MLB_PIT={era:4.20,whip:1.28,k9:8.8,bb9:3.2,fip:4.15,_live:false};
-let DATA=null, currentTab='overview', refreshTimer=null, aiInsightCache='', lastRenderTime=0, aiInsightTimer=null;
+let DATA=null, currentTab='overview', refreshTimer=null, lastRenderTime=0;
 
 // ── HEALTH MONITOR ──
 const HEALTH=(()=>{
@@ -464,6 +476,7 @@ const SEED={
       {date:'May 30',opp:'CIN',r:'W',score:'5-2'},
     ],
   },
+  news:[],
 };
 
 function pct(w,l){if(!w&&!l)return'.000';return(w/(w+l)).toFixed(3).replace('0.','.')}
@@ -472,6 +485,7 @@ function rainColor(r){return r>=60?'var(--crimson)':r>=30?'var(--yellow)':'var(-
 function sc(v,a,low=false){const d=low?a-v:v-a;return d>0.05*a?'var(--green)':d<-0.05*a?'var(--crimson)':'var(--yellow)'}
 function badge(v,a,low,fmt){const c=sc(v,a,low);const cls=c.includes('green')?'badge bg':c.includes('crimson')?'badge br':'badge by';return`<span class="${cls}">${fmt?fmt(v):v}</span>`}
 function stamp(){return new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true})}
+function _timeAgo(iso){if(!iso)return'';const ms=Date.now()-new Date(iso).getTime();if(ms<3600000)return Math.round(ms/60000)+'m ago';if(ms<86400000)return Math.round(ms/3600000)+'h ago';return Math.round(ms/86400000)+'d ago';}
 
 // ── MLB LIVE DATA ──
 const ATL_ID=144, NLE_DIV=204;
@@ -510,7 +524,7 @@ async function fetchLiveData(){
   const LAT=33.891, LON=-84.468;
 
   // First parallel wave: primary data sources
-  const [sr,gr,br,pr,rr,er,wr,ssr,lbr,lpr]=await Promise.all([
+  const [sr,gr,br,pr,rr,er,wr,ssr,lbr,lpr,nr]=await Promise.all([
     HEALTH.safeFetch(`${base}/standings?leagueId=103,104&season=${season}&standingsTypes=regularSeason&hydrate=team,records`),
     HEALTH.safeFetch(`${base}/schedule?sportId=1&teamId=${ATL_ID}&startDate=${start}&endDate=${end}&hydrate=linescore,team,decisions`),
     HEALTH.safeFetch(`${base}/stats?stats=season&group=hitting&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=60&sportId=1&gameType=R`).catch(()=>null),
@@ -520,7 +534,8 @@ async function fetchLiveData(){
     HEALTH.safeFetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=5&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,uv_index_max&timezone=auto`).catch(()=>null),
     HEALTH.safeFetch(`${base}/schedule?sportId=1&teamId=${ATL_ID}&startDate=${seasonStart}&endDate=${seasonEnd}&gameType=R`).catch(()=>null),
     HEALTH.safeFetch(`${base}/teams/stats?sportId=1&stats=season&season=${season}&group=hitting&gameType=R`).catch(()=>null),
-    HEALTH.safeFetch(`${base}/teams/stats?sportId=1&stats=season&season=${season}&group=pitching&gameType=R`).catch(()=>null)
+    HEALTH.safeFetch(`${base}/teams/stats?sportId=1&stats=season&season=${season}&group=pitching&gameType=R`).catch(()=>null),
+    HEALTH.safeFetch(`${espnBase}/teams/15/news?limit=12`).catch(()=>null)
   ]);
 
   // Parse schedule early so we can find last game ID for boxscore fetch
@@ -533,7 +548,7 @@ async function fetchLiveData(){
   }
 
   // Second parallel wave: remaining JSON + boxscore for last game
-  const [standingsJ,battingJ,pitchingJ,rosterJ,espnJ,weatherJ,seasonScheduleJ,leagueBatJ,leaguePitJ,boxscoreJ]=await Promise.all([
+  const [standingsJ,battingJ,pitchingJ,rosterJ,espnJ,weatherJ,seasonScheduleJ,leagueBatJ,leaguePitJ,boxscoreJ,newsJ]=await Promise.all([
     sr.json(),
     br?br.json():Promise.resolve(null),
     pr?pr.json():Promise.resolve(null),
@@ -543,7 +558,8 @@ async function fetchLiveData(){
     ssr?ssr.json().catch(()=>null):Promise.resolve(null),
     lbr?lbr.json().catch(()=>null):Promise.resolve(null),
     lpr?lpr.json().catch(()=>null):Promise.resolve(null),
-    lastGamePk?HEALTH.safeFetch(`${base}/game/${lastGamePk}/boxscore`).then(r=>r.json()).catch(()=>null):Promise.resolve(null)
+    lastGamePk?HEALTH.safeFetch(`${base}/game/${lastGamePk}/boxscore`).then(r=>r.json()).catch(()=>null):Promise.resolve(null),
+    nr?nr.json().catch(()=>null):Promise.resolve(null)
   ]);
 
   return{
@@ -557,7 +573,8 @@ async function fetchLiveData(){
     seasonSchedule:seasonScheduleJ,
     leagueBatting:leagueBatJ,
     leaguePitching:leaguePitJ,
-    boxscore:boxscoreJ
+    boxscore:boxscoreJ,
+    news:newsJ
   };
 }
 
@@ -733,7 +750,8 @@ function mergeLiveData(seed,live){
           id:pid,
           jersey:jerseyMap[pid]||'',
           name:s.player?.fullName||s.person?.fullName||'Unknown',
-          pos:posMap[pid]||'—',
+          pos:posMap[pid]||s.position?.abbreviation||s.player?.primaryPosition?.abbreviation||'—',
+          _active:!!posMap[pid],
           avg:fp(s.stat.avg),
           obp:fp(s.stat.obp),
           slg:fp(s.stat.slg),
@@ -788,6 +806,7 @@ function mergeLiveData(seed,live){
           jersey:jerseyMap[pid]||'',
           name:s.player?.fullName||s.person?.fullName||'Unknown',
           pos:isSP?'SP':'RP',
+          _active:!!posMap[pid],
           era:fp(st.era),
           whip:fp(st.whip),
           k9:fp(st.strikeoutsPer9Inn),
@@ -970,6 +989,18 @@ function mergeLiveData(seed,live){
     d.trajectory=traj;
   }
 
+  // ── ESPN Analyst Feed ──
+  if(live.news?.articles?.length){
+    d.news=(live.news.articles||[]).slice(0,12).map(a=>({
+      headline:a.headline||'',
+      desc:a.description||'',
+      byline:a.byline||'',
+      published:a.published||'',
+      url:a.links?.web?.href||null
+    }));
+    HEALTH.ok(`Analyst feed: ${d.news.length} articles loaded`);
+  }else{HEALTH.warn('ESPN news fetch failed — analyst feed empty');}
+
   return d;
 }
 
@@ -978,9 +1009,6 @@ async function refreshAll(){
   const lbl=document.getElementById('refresh-label');
   if(pill) pill.classList.remove('live');
   if(lbl) lbl.textContent='Updating…';
-  clearTimeout(aiInsightTimer);
-  // 1) fetch live MLB data FIRST so the AI Analyst prompt uses fresh stats,
-  //    not last cycle's data (or SEED on first open).
   const liveResult=await fetchLiveData().then(v=>({status:'fulfilled',value:v}),e=>({status:'rejected',reason:e}));
   if(liveResult.status==='fulfilled'){
     DATA=mergeLiveData(SEED,liveResult.value);
@@ -989,31 +1017,6 @@ async function refreshAll(){
     DATA=SEED;
     HEALTH.fix(`Live fetch failed (${liveResult.reason?.message||'unknown'}) — using SEED fallback`);
   }
-  // 2) build AI Analyst prompt from the now-fresh DATA and fire it (don't block).
-  const d=DATA;
-  const tb=d.batters.length?d.batters.reduce((a,b)=>b.ops>a.ops?b:a):null;
-  const sp=d.pitchers.filter(p=>p.pos==='SP');
-  const tp=sp.length?sp.reduce((a,b)=>b.era<a.era?b:a):null;
-  const _ord=n=>n==null?'1st':(['1st','2nd','3rd','4th','5th'][n-1]||`${n}th`);
-  const last3=(d.lastGame?.recentResults||[]).slice(-3).map(r=>`${r.r} vs ${r.opp} ${r.score}`).join(', ')||'recent W';
-  const systemContext=`${d.record.w}-${d.record.l} (.${String(Math.round((d.record.pct||0)*1000)).padStart(3,'0')}), ${_ord(d.record.nleRank)} NL East. Top batter: ${tb?tb.name+' '+tb.ops.toFixed(3)+' OPS':'—'}. Ace: ${tp?tp.name+' '+tp.era.toFixed(2)+' ERA':'—'}. Last 3: ${last3}.`;
-  const userPrompt=`Hot take: 2026 Braves are ${d.record.w}-${d.record.l}, ${_ord(d.record.nleRank)} NL East. Top batter: ${tb?tb.name+' '+tb.ops.toFixed(3)+' OPS':'—'}. Ace: ${tp?tp.name+' '+tp.era.toFixed(2)+' ERA':'—'}. Last 3: ${last3}. Two punchy analyst sentences. No markdown.`;
-  fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({messages:[{role:'user',content:userPrompt}],systemContext})})
-    .then(r=>r.json()).then(r=>{
-      if(r.text){aiInsightCache=r.text;const el=document.querySelector('.ait');if(el)el.textContent=r.text;}
-    })
-    .catch(e=>HEALTH.warn(`AI insight fetch failed: ${e.message}`));
-  // fallback: if insight still loading after 12s, show static text built from fresh DATA
-  aiInsightTimer=setTimeout(()=>{
-    const el=document.querySelector('.ait');
-    if(el&&el.querySelector('.spin')){
-      const _ord2=n=>n==null?'atop':(n===1?'atop':`${(['1st','2nd','3rd','4th','5th'][n-1]||n+'th')} in`);
-      const fb=`Braves sit ${d.record.w}-${d.record.l}, ${_ord2(d.record.nleRank)} the NL East — elite pitching and a red-hot lineup keep them in the mix. The Chop is very much alive in 2026.`;
-      el.textContent=fb; aiInsightCache=fb;
-      HEALTH.fix('AI insight timed out — showing static fallback');
-    }
-  },12000);
   // update header record live
   const rec=document.getElementById('hdr-rec');
   const sub=document.getElementById('hdr-rec-sub');
@@ -1053,11 +1056,15 @@ function renderTab(tab){
 
 // ── OVERVIEW ──
 function renderOverview(d){
-  const tb=d.batters.length?d.batters.reduce((a,b)=>b.ops>a.ops?b:a):null;
-  const spList=d.pitchers.filter(p=>p.pos==='SP');
-  const tp=spList.length?spList.reduce((a,b)=>b.era<a.era?b:a):(d.pitchers.length?d.pitchers[0]:null);
-  if(!tb)HEALTH.warn('No batting data available for overview — batter card hidden');
-  if(!tp)HEALTH.warn('No pitching data available for overview — pitcher card hidden');
+  // Filter to active-roster players only for top-performer cards (excludes IL/injured)
+  const activeBatters=d.batters.filter(b=>b._active!==false);
+  const eligBatters=activeBatters.length?activeBatters:d.batters;
+  const tb=eligBatters.length?eligBatters.reduce((a,b)=>b.ops>a.ops?b:a):null;
+  const activeSP=d.pitchers.filter(p=>p.pos==='SP'&&p._active!==false);
+  const eligSP=activeSP.length?activeSP:d.pitchers.filter(p=>p.pos==='SP');
+  const tp=eligSP.length?eligSP.reduce((a,b)=>b.era<a.era?b:a):(d.pitchers.length?d.pitchers[0]:null);
+  if(!tb)HEALTH.warn('No active batting data for overview — batter card hidden');
+  if(!tp)HEALTH.warn('No active pitching data for overview — pitcher card hidden');
   // Dynamic subtitles — driven by live standings rankings
   const ord=n=>n==null?'':(['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th'][n-1]||`${n}th`);
   const nleSub=d.record.nleRank?`${ord(d.record.nleRank)} NL East`:'NL East';
@@ -1072,11 +1079,20 @@ function renderOverview(d){
   const l10Color=l10Pct>=0.6?'var(--green)':l10Pct>=0.4?'var(--yellow)':'var(--crimson)';
   const rdNum=parseFloat(String(d.record.runDiff).replace('+',''))||0;
   const rdColor=rdNum>0?'var(--green)':rdNum<0?'var(--crimson)':'var(--yellow)';
+  const newsHtml=(d.news&&d.news.length)
+    ?d.news.map(a=>{
+        const ta=_timeAgo(a.published);
+        const bl=a.byline?`<span class="social-byline">${a.byline}</span>`:'';
+        const onclick=a.url?`onclick="window.open(${JSON.stringify(a.url)},'_blank',{noreferrer:true})"`:'' ;
+        return`<div class="social-item" ${onclick}>
+          <div class="social-meta"><span class="social-badge">ESPN</span>${bl}${ta?`<span class="social-time">· ${ta}</span>`:''}</div>
+          <div class="social-hdl">${a.headline}</div>
+          ${a.desc?`<div class="social-desc">${a.desc}</div>`:''}
+        </div>`;
+      }).join('')
+    :`<div style="text-align:center;color:var(--dim);padding:24px;font-size:13px">Analyst feed loading… ⚾</div>`;
+
   document.getElementById('content').innerHTML=`
-    <div class="aic">
-      <div class="ail">⚡ AI ANALYST TAKE</div>
-      <div class="ait">${aiInsightCache||'<span class="spin"></span> Analyzing the Chop Shop…'}</div>
-    </div>
     <div class="card">
       <div class="ct" style="color:var(--green)">📈 SEASON AT A GLANCE</div>
       <div class="sg">
@@ -1128,6 +1144,10 @@ function renderOverview(d){
     <div class="card">
       <div class="ct" style="color:var(--muted)">📋 RECENT RESULTS</div>
       <div class="rrow">${d.lastGame.recentResults.map(r=>`<div class="rpill ${r.r==='W'?'w':'l'}"><div class="rd">${r.date} · ${r.opp}</div><div class="rl" style="color:${r.r==='W'?'var(--green)':'var(--crimson)'}">${r.r}</div><div class="rs">${r.score}</div></div>`).join('')}</div>
+    </div>
+    <div class="card" style="padding-bottom:12px">
+      <div class="ct" style="color:var(--blue)">📰 ANALYST FEED <span style="font-size:9px;color:var(--dim);font-weight:400;letter-spacing:0;text-transform:none">· ESPN · scroll to read more</span></div>
+      <div class="social-feed">${newsHtml}</div>
     </div>`;
 }
 
@@ -1682,15 +1702,6 @@ setInterval(()=>{
   if(c&&lastRenderTime>0&&!c.innerHTML.trim()){
     HEALTH.fix('Content area found empty — re-rendering current tab');
     renderTab(currentTab);
-  }
-  // AI insight stuck on spinner >15s after render
-  const ait=document.querySelector('.ait');
-  if(ait&&ait.querySelector('.spin')&&(Date.now()-lastRenderTime)>15000){
-    const d=DATA||SEED;
-    const _ord=n=>n==null?'atop':(n===1?'atop':`${(['1st','2nd','3rd','4th','5th'][n-1]||n+'th')} in`);
-    const fb=`Braves sit ${d.record.w}-${d.record.l}, ${_ord(d.record.nleRank)} the NL East — elite pitching and a loaded lineup keep them in the mix. The Chop is very much alive in 2026.`;
-    ait.textContent=fb; aiInsightCache=fb;
-    HEALTH.fix('AI insight stuck on spinner — replaced with static fallback');
   }
 },60*1000);
 
