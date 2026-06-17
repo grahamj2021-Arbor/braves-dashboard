@@ -1,4 +1,21 @@
+# Environment secrets — never commit
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# Vercel
 .vercel
+
+# Dependencies
 node_modules/
 package-lock.json
 package.json
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp

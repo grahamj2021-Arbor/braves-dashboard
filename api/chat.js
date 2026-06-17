@@ -7,12 +7,67 @@ const MODELS = [
 
 const PER_MODEL_TIMEOUT_MS = 7000;
 
+// ── LIMITS ──
+const MAX_MESSAGES       = 12;          // max conversation turns sent
+const MAX_MSG_CHARS      = 600;         // per message content
+const MAX_CONTEXT_CHARS  = 900;         // systemContext injected by the page
+const RATE_LIMIT_RPM     = 10;          // requests per minute per IP
+const RATE_WINDOW_MS     = 60_000;
+
+// ── CORS ──
+const ALLOWED_ORIGINS = [
+  'https://bravesdashboards.com',
+  'https://www.bravesdashboards.com',
+];
+function resolveOrigin(origin) {
+  if (!origin) return null;
+  if (ALLOWED_ORIGINS.includes(origin)) return origin;
+  // Vercel preview deployments for this project
+  if (/^https:\/\/braves-dashboard[a-z0-9-]*\.vercel\.app$/.test(origin)) return origin;
+  return null;
+}
+
+// ── IN-MEMORY RATE LIMITER ──
+// Works within a single warm Vercel instance; cold starts reset the window, which
+// is acceptable — the CORS lock is the primary line of defense against abuse.
+const _rl = new Map();
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of _rl) {
+    if (now - v.t > RATE_WINDOW_MS * 2) _rl.delete(k);
+  }
+}, 5 * 60_000).unref?.();
+
+function checkRate(ip) {
+  const now = Date.now();
+  const e = _rl.get(ip) ?? { count: 0, t: now };
+  if (now - e.t > RATE_WINDOW_MS) { _rl.set(ip, { count: 1, t: now }); return true; }
+  if (e.count >= RATE_LIMIT_RPM) return false;
+  e.count++;
+  _rl.set(ip, e);
+  return true;
+}
+
+function clientIp(req) {
+  return (
+    req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+    req.headers['x-real-ip'] ||
+    'unknown'
+  );
+}
+
+// ── INPUT SANITISER ──
+// Strips HTML tags and trims. Protects the upstream model from injection via
+// crafted systemContext or message payloads.
+function sanitize(s, maxLen) {
+  if (typeof s !== 'string') return '';
+  return s.replace(/<[^>]*>/g, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim().slice(0, maxLen);
+}
+
+// ── SYSTEM PROMPT ──
 const SYSTEM_BASE = `You are The Chop Bot — the AI mascot of a hardcore Atlanta Braves fan dashboard. You are a passionate, knowledgeable Braves superfan and MLB analyst. You know everything: Braves history (from Milwaukee to Atlanta), current roster stats, pitching strategy, sabermetrics, ballpark culture, and the broader MLB landscape. You're enthusiastic and punchy — think SNL's Stefon crossed with a seasoned baseball scout. Keep answers to 3-5 sentences unless the user clearly wants more depth. Use baseball lingo naturally. Never break character. If you don't know a very recent stat, say so honestly and give context.`;
 
 // ── DETERMINISTIC FALLBACK ──
-// Parses live stats out of systemContext and the user's last message to compose
-// an on-brand response when every upstream model rate-limits or errors. This
-// runs entirely server-side with no external dependency.
 function pickOne(arr, seed) {
   return arr[Math.abs(seed) % arr.length];
 }
@@ -30,7 +85,6 @@ function parseContext(...sources) {
     if (out.last10 == null && (m = ctx.match(/Last 10:\s*(\d+-\d+)/i))) out.last10 = m[1];
     if (out.runDiff == null && (m = ctx.match(/Run diff:\s*([+\-]?\d+)/i))) out.runDiff = parseInt(m[1]);
     if (out.batter == null) {
-      // Accept "Top batter: Name .932 OPS" or "Top batter: Name 0.932 OPS"
       if ((m = ctx.match(/Top batter:\s*([A-Za-zÀ-ÿ.'\- ]+?)\s+0?\.(\d{3})\s+OPS/i))) {
         out.batter = m[1].trim();
         out.batterOps = parseFloat('0.' + m[2]);
@@ -57,8 +111,6 @@ function localTake(messages, systemContext) {
     : s.nleRank ? `${s.nleRank}${['st','nd','rd','th'][Math.min(s.nleRank-1,3)]} in the NL East`
     : 'in the NL East mix';
 
-  // Topic-aware opener — but only when the user is actually asking, not when
-  // the page sent a "Hot take:" / summary-style prompt with stats embedded.
   const isOverviewPrompt = /^hot take:|two punchy|no markdown/i.test(lastUser);
   let opener;
   if (!isOverviewPrompt && /\b(sale|ace|pitcher|starter|rotation)\b/.test(q) && s.ace) {
@@ -90,7 +142,6 @@ function localTake(messages, systemContext) {
     opener = pickOne(openers[tone], seed);
   }
 
-  // Closer pulled from real numbers
   const closers = [];
   if (s.ace && s.aceEra !== undefined) {
     if (s.aceEra < 3.0) closers.push(`${s.ace} at ${s.aceEra.toFixed(2)} is the kind of October stopper that wins playoff series.`);
@@ -149,24 +200,65 @@ async function tryModel(model, apiKey, body) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // ── CORS ──
+  const origin = req.headers['origin'] || '';
+  const allowedOrigin = resolveOrigin(origin);
+  if (allowedOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    res.setHeader('Vary', 'Origin');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // Reject non-browser calls that supply no Origin at all (server-to-server scraping)
+  // but allow requests with a whitelisted Origin.
+  if (!allowedOrigin) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { messages, systemContext } = req.body || {};
-  if (!Array.isArray(messages) || messages.length === 0) {
+  // ── RATE LIMIT ──
+  const ip = clientIp(req);
+  if (!checkRate(ip)) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({ error: 'Too many requests — slow down, slugger.' });
+  }
+
+  // ── INPUT VALIDATION ──
+  const body = req.body || {};
+
+  if (!Array.isArray(body.messages) || body.messages.length === 0) {
     return res.status(400).json({ error: 'messages array required' });
   }
+  if (body.messages.length > MAX_MESSAGES) {
+    return res.status(400).json({ error: `Too many messages (max ${MAX_MESSAGES})` });
+  }
+
+  // Validate and sanitize each message
+  const messages = [];
+  for (const m of body.messages) {
+    if (!m || typeof m !== 'object') return res.status(400).json({ error: 'Invalid message format' });
+    if (m.role !== 'user' && m.role !== 'assistant') return res.status(400).json({ error: 'Invalid message role' });
+    const content = sanitize(m.content, MAX_MSG_CHARS);
+    if (!content) return res.status(400).json({ error: 'Empty message content' });
+    messages.push({ role: m.role, content });
+  }
+
+  // Sanitize the stats context injected by the page
+  const systemContext = body.systemContext ? sanitize(String(body.systemContext), MAX_CONTEXT_CHARS) : '';
+
   const SYSTEM = systemContext ? SYSTEM_BASE + '\n\nCurrent live stats: ' + systemContext : SYSTEM_BASE;
 
+  // ── CALL UPSTREAM ──
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     return res.status(200).json({ text: localTake(messages, systemContext), source: 'fallback-no-key' });
   }
 
-  const body = JSON.stringify({
+  const reqBody = JSON.stringify({
     model: '',
     max_tokens: 600,
     messages: [{ role: 'system', content: SYSTEM }, ...messages],
@@ -174,7 +266,7 @@ export default async function handler(req, res) {
 
   const reasons = [];
   for (const model of MODELS) {
-    const attemptBody = body.replace('"model":""', `"model":${JSON.stringify(model)}`);
+    const attemptBody = reqBody.replace('"model":""', `"model":${JSON.stringify(model)}`);
     const result = await tryModel(model, apiKey, attemptBody);
     if (result.ok) {
       return res.status(200).json({ text: result.text, source: model });
@@ -182,8 +274,6 @@ export default async function handler(req, res) {
     reasons.push(`${model.split('/').pop()}:${result.reason}`);
   }
 
-  // Every model failed — deterministic fallback that USES live stats so it
-  // doesn't read like a canned error.
   console.error('All models failed:', reasons.join(' | '));
   return res.status(200).json({ text: localTake(messages, systemContext), source: 'fallback-all-failed' });
 }
