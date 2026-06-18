@@ -33,6 +33,10 @@
     .hdr-sub{font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:1px}
     .hdr-rec{margin-left:auto;text-align:right;font-family:'Anton',sans-serif;font-size:24px;color:var(--green);text-shadow:0 0 10px rgba(34,197,94,.4);line-height:1}
     .hdr-rec-sub{font-size:9px;color:var(--muted);margin-top:2px}
+    .hdr-game-strip{display:flex;align-items:center;gap:8px;margin-top:7px;padding:6px 0 1px;border-top:1px solid rgba(255,255,255,.07);min-height:0}
+    .hdr-gs-tag{font-size:9px;font-weight:900;letter-spacing:1.5px;padding:2px 7px;border-radius:4px;color:#fff;flex-shrink:0;text-transform:uppercase}
+    .hdr-gs-score{font-family:'Anton',sans-serif;font-size:15px;color:var(--text);letter-spacing:.5px}
+    .hdr-gs-meta{font-size:9px;color:var(--dim);letter-spacing:.5px;margin-left:auto;text-align:right;white-space:nowrap}
     .refresh-pill{display:inline-flex;align-items:center;gap:5px;font-size:9px;color:var(--dim);background:#0a1410;border:1px solid var(--border);border-radius:20px;padding:3px 8px;margin-top:6px;cursor:pointer}
     .refresh-pill.live{color:var(--green);border-color:#22c55e44}
     .pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite}
@@ -275,6 +279,7 @@
         <div><div class="hdr-title">BRAVES DASHBOARD</div><div class="hdr-sub">LIVE · 2026 SEASON</div></div>
         <div style="margin-left:auto;text-align:right"><div class="hdr-rec" id="hdr-rec">40-19</div><div class="hdr-rec-sub" id="hdr-rec-sub">1ST · NL EAST · .678</div></div>
       </div>
+      <div class="hdr-game-strip" id="hdr-game-strip"></div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
         <div class="refresh-pill live" id="refresh-pill" onclick="refreshAll()">
           <div class="pulse"></div>
@@ -483,6 +488,68 @@ function sc(v,a,low=false){const d=low?a-v:v-a;return d>0.05*a?'var(--green)':d<
 function badge(v,a,low,fmt){const c=sc(v,a,low);const cls=c.includes('green')?'badge bg':c.includes('crimson')?'badge br':'badge by';return`<span class="${cls}">${fmt?fmt(v):v}</span>`}
 function stamp(){return new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true})}
 function _timeAgo(iso){if(!iso)return'';const ms=Date.now()-new Date(iso).getTime();if(ms<3600000)return Math.round(ms/60000)+'m ago';if(ms<86400000)return Math.round(ms/3600000)+'h ago';return Math.round(ms/86400000)+'d ago';}
+
+// Parse "7:20 PM EDT" → minutes from local midnight (close enough for ET fans)
+function _gameTimeMins(timeStr){
+  if(!timeStr)return null;
+  const m=timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if(!m)return null;
+  let h=parseInt(m[1]),min=parseInt(m[2]);
+  const pm=m[3].toUpperCase()==='PM';
+  if(pm&&h!==12)h+=12;
+  if(!pm&&h===12)h=0;
+  return h*60+min;
+}
+
+function updateHdrContext(d){
+  const el=document.getElementById('hdr-game-strip');
+  if(!el)return;
+  const today=new Date().toISOString().slice(0,10);
+  const nowMins=new Date().getHours()*60+new Date().getMinutes();
+
+  // ── POST-GAME: today's game is in the completed list ──
+  const doneToday=(d.completedGames||[]).find(g=>g.isoDate===today);
+  if(doneToday){
+    const lg=d.lastGame;
+    const atlHome=lg.home?.abbr==='ATL';
+    const atlR=atlHome?lg.home.runs:lg.away.runs;
+    const oppR=atlHome?lg.away.runs:lg.home.runs;
+    const oppAbbr=atlHome?lg.away.abbr:lg.home.abbr;
+    const won=atlR>oppR;
+    el.innerHTML=`<span class="hdr-gs-tag" style="background:${won?'#16a34a':'#CE1141'}">${won?'W':'L'}</span>`
+      +`<span class="hdr-gs-score">ATL ${atlR} · ${pcEsc(oppAbbr)} ${oppR}</span>`
+      +`<span class="hdr-gs-meta">FINAL · ${pcEsc(lg.date||'')}</span>`;
+    return;
+  }
+
+  // ── TODAY'S UPCOMING / LIVE GAME ──
+  const ng=(d.nextGames||[])[0];
+  if(ng&&ng.isoDate===today){
+    const gm=_gameTimeMins(ng.time);
+    const elapsed=gm!=null?nowMins-gm:null;
+    if(elapsed!=null&&elapsed>15&&elapsed<270){
+      // heuristic: game started ≤15 min ago → show live indicator
+      el.innerHTML=`<span class="hdr-gs-tag" style="background:#d97706;animation:pulse 1.4s infinite">LIVE</span>`
+        +`<span class="hdr-gs-score">vs ${pcEsc(ng.opp)}</span>`
+        +`<span class="hdr-gs-meta">${pcEsc(ng.loc||'')} · syncing every 2 min</span>`;
+    }else{
+      el.innerHTML=`<span class="hdr-gs-tag" style="background:#0369a1">TODAY</span>`
+        +`<span class="hdr-gs-score">vs ${pcEsc(ng.opp)}</span>`
+        +`<span class="hdr-gs-meta">${pcEsc(ng.time||'')} · ${pcEsc(ng.loc||'')}</span>`;
+    }
+    return;
+  }
+
+  // ── OFF-DAY: show next upcoming game ──
+  if(ng){
+    el.innerHTML=`<span class="hdr-gs-tag" style="background:#374151">NEXT</span>`
+      +`<span class="hdr-gs-score">vs ${pcEsc(ng.opp)}</span>`
+      +`<span class="hdr-gs-meta">${pcEsc(ng.date||'')} · ${pcEsc(ng.time||'')}</span>`;
+    return;
+  }
+
+  el.innerHTML='';
+}
 
 // ── MLB LIVE DATA ──
 const ATL_ID=144, NLE_DIV=204;
@@ -1042,7 +1109,10 @@ async function refreshAll(){
   const rec=document.getElementById('hdr-rec');
   const sub=document.getElementById('hdr-rec-sub');
   if(rec) rec.textContent=`${DATA.record.w}-${DATA.record.l}`;
-  if(sub) sub.textContent=`1ST · NL EAST · ${DATA.record.pct}`;
+  const nleOrd=['1ST','2ND','3RD','4TH','5TH'];
+  const nleTag=DATA.record.nleRank?(nleOrd[DATA.record.nleRank-1]||DATA.record.nleRank+'TH')+' NL EAST':'NL EAST';
+  if(sub) sub.textContent=`${nleTag} · ${DATA.record.pct}`;
+  updateHdrContext(DATA);
   const upEl=document.getElementById('last-updated');
   if(upEl) upEl.textContent=`Updated ${stamp()}`;
   if(pill) pill.classList.add('live');
@@ -1734,6 +1804,7 @@ setInterval(()=>{
 // ── BOOT ──
 HEALTH.info('Dashboard initialised — beginning first sync');
 DATA=SEED;
+updateHdrContext(DATA);
 refreshAll();
 </script>
 </body>
