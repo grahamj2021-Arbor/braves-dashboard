@@ -1177,7 +1177,7 @@ function renderOverview(d){
         const safeHdl=pcEsc(a.headline);
         const safeDesc=pcEsc(a.desc);
         const bl=safeByline?`<span class="social-byline">${safeByline}</span>`:'';
-        const onclick=a.url?`onclick="window.open(${JSON.stringify(a.url)},'_blank','noopener,noreferrer')"`:'';
+        const onclick=a.url?`onclick="window.open(${pcEsc(JSON.stringify(a.url))},'_blank','noopener,noreferrer')"`:'';
         return`<div class="social-item" ${onclick}>
           <div class="social-meta"><span class="social-badge">ESPN</span>${bl}${ta?`<span class="social-time">· ${ta}</span>`:''}</div>
           <div class="social-hdl">${safeHdl}</div>
