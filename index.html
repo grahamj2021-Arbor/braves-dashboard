@@ -504,8 +504,11 @@ function _gameTimeMins(timeStr){
 function updateHdrContext(d){
   const el=document.getElementById('hdr-game-strip');
   if(!el)return;
-  const today=new Date().toISOString().slice(0,10);
-  const nowMins=new Date().getHours()*60+new Date().getMinutes();
+  // Use local wall-clock date, not UTC, because MLB API game dates are Eastern Time.
+  // toISOString() would roll to tomorrow after 8 PM EDT and break evening-game detection.
+  const now=new Date();
+  const today=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const nowMins=now.getHours()*60+now.getMinutes();
 
   // ── POST-GAME: today's game is in the completed list ──
   const doneToday=(d.completedGames||[]).find(g=>g.isoDate===today);
