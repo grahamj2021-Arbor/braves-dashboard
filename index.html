@@ -277,7 +277,7 @@
       <div class="hdr-row">
         <div class="logo">ATL</div>
         <div><div class="hdr-title">BRAVES DASHBOARD</div><div class="hdr-sub">LIVE · 2026 SEASON</div></div>
-        <div style="margin-left:auto;text-align:right"><div class="hdr-rec" id="hdr-rec">40-19</div><div class="hdr-rec-sub" id="hdr-rec-sub">1ST · NL EAST · .678</div></div>
+        <div style="margin-left:auto;text-align:right"><div class="hdr-rec" id="hdr-rec">49-26</div><div class="hdr-rec-sub" id="hdr-rec-sub">1ST NL EAST · .654</div></div>
       </div>
       <div class="hdr-game-strip" id="hdr-game-strip"></div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
@@ -1808,6 +1808,7 @@ setInterval(()=>{
 HEALTH.info('Dashboard initialised — beginning first sync');
 DATA=SEED;
 updateHdrContext(DATA);
+renderTab(currentTab);
 refreshAll();
 </script>
 </body>
