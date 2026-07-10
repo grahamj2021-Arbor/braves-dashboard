@@ -1,0 +1,232 @@
+name: Daily Health Check
+
+on:
+  schedule:
+    - cron: '0 13 * * *'   # 9 AM ET every day
+  workflow_dispatch:         # manual trigger any time
+
+jobs:
+  health-check:
+    name: Health Check — bravesdashboards.com
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write          # needed to open a failure issue
+
+    steps:
+      # ── 1. STATIC CHECKS (no network needed) ────────────────────────────
+      - uses: actions/checkout@v4
+
+      - name: Static — key DOM IDs present in source
+        id: static_dom
+        run: |
+          FAILS=0
+          for NEEDLE in "id=\"hdr-rec\"" "id=\"hdr-game-strip\"" "id=\"content\"" "id=\"refresh-pill\"" "id=\"last-updated\""; do
+            if grep -q "$NEEDLE" index.html; then
+              echo "  ✅ $NEEDLE" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "  ❌ MISSING: $NEEDLE" >> $GITHUB_STEP_SUMMARY
+              FAILS=$((FAILS+1))
+            fi
+          done
+          echo "dom_fails=$FAILS" >> $GITHUB_OUTPUT
+
+      - name: Static — key JS functions present
+        id: static_js
+        run: |
+          FAILS=0
+          for FN in "refreshAll" "fetchLiveData" "mergeLiveData" "updateHdrContext" "localTake" "renderOverview" "renderCards"; do
+            if grep -q "$FN" index.html; then
+              echo "  ✅ $FN()" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "  ❌ MISSING: $FN()" >> $GITHUB_STEP_SUMMARY
+              FAILS=$((FAILS+1))
+            fi
+          done
+          echo "js_fails=$FAILS" >> $GITHUB_OUTPUT
+
+      - name: Static — no stale AI-insight references
+        id: static_stale
+        run: |
+          STALE=0
+          for SYM in "aiInsightCache" "aiInsightTimer" "fetchAiInsight"; do
+            if grep -q "$SYM" index.html; then
+              echo "  ❌ STALE REFERENCE: $SYM" >> $GITHUB_STEP_SUMMARY
+              STALE=$((STALE+1))
+            fi
+          done
+          if [ $STALE -eq 0 ]; then echo "  ✅ No stale AI-insight symbols" >> $GITHUB_STEP_SUMMARY; fi
+          echo "stale_fails=$STALE" >> $GITHUB_OUTPUT
+
+      - name: Static — CORS no longer wildcard in api/chat.js
+        id: static_cors
+        run: |
+          if grep -q "Allow-Origin.*\*" api/chat.js; then
+            echo "  ❌ Wildcard CORS still present in api/chat.js" >> $GITHUB_STEP_SUMMARY
+            echo "cors_fail=1" >> $GITHUB_OUTPUT
+          else
+            echo "  ✅ CORS is locked (no wildcard)" >> $GITHUB_STEP_SUMMARY
+            echo "cors_fail=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Static — no http:// mixed content
+        id: static_https
+        run: |
+          MIXED=$(grep -oP 'src="http://[^"]*"|href="http://[^"]*"' index.html || true)
+          if [ -n "$MIXED" ]; then
+            echo "  ❌ Mixed content found:" >> $GITHUB_STEP_SUMMARY
+            echo "$MIXED" >> $GITHUB_STEP_SUMMARY
+            echo "https_fail=1" >> $GITHUB_OUTPUT
+          else
+            echo "  ✅ No mixed content (all resources HTTPS)" >> $GITHUB_STEP_SUMMARY
+            echo "https_fail=0" >> $GITHUB_OUTPUT
+          fi
+
+      # ── 2. LIVE ENDPOINT CHECKS ─────────────────────────────────────────
+      - name: Live — homepage returns 200
+        id: live_home
+        run: |
+          HTTP=$(curl -s -o /tmp/homepage.html -w "%{http_code}" --max-time 20 https://bravesdashboards.com)
+          if [ "$HTTP" = "200" ]; then
+            echo "  ✅ Homepage: HTTP $HTTP" >> $GITHUB_STEP_SUMMARY
+            echo "home_fail=0" >> $GITHUB_OUTPUT
+          else
+            echo "  ❌ Homepage: HTTP $HTTP" >> $GITHUB_STEP_SUMMARY
+            echo "home_fail=1" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Live — key elements in served HTML
+        id: live_dom
+        run: |
+          FAILS=0
+          for NEEDLE in "hdr-rec" "hdr-game-strip" "refreshAll" "BRAVES DASHBOARD"; do
+            if grep -q "$NEEDLE" /tmp/homepage.html 2>/dev/null; then
+              echo "  ✅ Found in live page: $NEEDLE" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "  ❌ Missing from live page: $NEEDLE" >> $GITHUB_STEP_SUMMARY
+              FAILS=$((FAILS+1))
+            fi
+          done
+          echo "live_dom_fails=$FAILS" >> $GITHUB_OUTPUT
+
+      - name: Live — security headers present
+        id: live_headers
+        run: |
+          HEADERS=$(curl -s -I --max-time 15 https://bravesdashboards.com)
+          FAILS=0
+          for HDR in "x-content-type-options" "x-frame-options" "strict-transport-security" "content-security-policy"; do
+            if echo "$HEADERS" | grep -qi "$HDR"; then
+              echo "  ✅ Header present: $HDR" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "  ❌ Header missing: $HDR" >> $GITHUB_STEP_SUMMARY
+              FAILS=$((FAILS+1))
+            fi
+          done
+          echo "header_fails=$FAILS" >> $GITHUB_OUTPUT
+
+      - name: Live — Chop Bot API responds
+        id: live_api
+        run: |
+          RESP=$(curl -s --max-time 25 \
+            -X POST https://bravesdashboards.com/api/chat \
+            -H "Content-Type: application/json" \
+            -H "Origin: https://bravesdashboards.com" \
+            -d '{"messages":[{"role":"user","content":"health check ping — one sentence only"}]}')
+          if echo "$RESP" | grep -q '"text"'; then
+            echo "  ✅ Chop Bot API: returned a text response" >> $GITHUB_STEP_SUMMARY
+            echo "api_fail=0" >> $GITHUB_OUTPUT
+          else
+            echo "  ❌ Chop Bot API: unexpected response: $RESP" >> $GITHUB_STEP_SUMMARY
+            echo "api_fail=1" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Live — API rejects wrong origin
+        id: live_cors
+        run: |
+          RESP=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 \
+            -X POST https://bravesdashboards.com/api/chat \
+            -H "Content-Type: application/json" \
+            -H "Origin: https://evil.example.com" \
+            -d '{"messages":[{"role":"user","content":"test"}]}')
+          if [ "$RESP" = "403" ]; then
+            echo "  ✅ CORS enforcement: rejected evil.example.com with 403" >> $GITHUB_STEP_SUMMARY
+            echo "cors_enforce_fail=0" >> $GITHUB_OUTPUT
+          else
+            echo "  ❌ CORS enforcement: expected 403, got $RESP" >> $GITHUB_STEP_SUMMARY
+            echo "cors_enforce_fail=1" >> $GITHUB_OUTPUT
+          fi
+
+      # ── 3. FINAL SUMMARY + FAILURE ISSUE ────────────────────────────────
+      - name: Collate results
+        id: collate
+        if: always()
+        run: |
+          TOTAL_FAILS=$(( \
+            ${{ steps.static_dom.outputs.dom_fails || 0 }} + \
+            ${{ steps.static_js.outputs.js_fails || 0 }} + \
+            ${{ steps.static_stale.outputs.stale_fails || 0 }} + \
+            ${{ steps.static_cors.outputs.cors_fail || 0 }} + \
+            ${{ steps.static_https.outputs.https_fail || 0 }} + \
+            ${{ steps.live_home.outputs.home_fail || 0 }} + \
+            ${{ steps.live_dom.outputs.live_dom_fails || 0 }} + \
+            ${{ steps.live_headers.outputs.header_fails || 0 }} + \
+            ${{ steps.live_api.outputs.api_fail || 0 }} + \
+            ${{ steps.live_cors.outputs.cors_enforce_fail || 0 }} \
+          ))
+          DATE=$(date -u '+%Y-%m-%d')
+          if [ "$TOTAL_FAILS" -eq 0 ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## ✅ HEALTHY — $DATE" >> $GITHUB_STEP_SUMMARY
+            echo "All ${{ strategy.job-total || '10' }} checks passed. bravesdashboards.com is live and healthy." >> $GITHUB_STEP_SUMMARY
+            echo "overall=pass" >> $GITHUB_OUTPUT
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## ❌ UNHEALTHY — $DATE — $TOTAL_FAILS check(s) failed" >> $GITHUB_STEP_SUMMARY
+            echo "overall=fail" >> $GITHUB_OUTPUT
+          fi
+          echo "date=$DATE" >> $GITHUB_OUTPUT
+
+      - name: Ensure health-check label exists
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create "health-check" \
+            --repo ${{ github.repository }} \
+            --color "0075ca" \
+            --description "Automated daily health check" 2>/dev/null || true
+
+      - name: Open GitHub issue on failure
+        if: steps.collate.outputs.overall == 'fail'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DATE=${{ steps.collate.outputs.date }}
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          EXISTING=$(gh issue list --repo ${{ github.repository }} --state open --label "health-check" --json number --jq length)
+          if [ "$EXISTING" -eq 0 ]; then
+            gh issue create \
+              --repo ${{ github.repository }} \
+              --title "⚠️ Health check failed — $DATE" \
+              --label "health-check" \
+              --body "The daily health check failed on **$DATE**.
+
+See the [full workflow run]($RUN_URL) for which checks failed and why.
+
+This issue will be closed automatically when the next health check passes." || true
+          fi
+
+      - name: Close any open health-check issues on pass
+        if: steps.collate.outputs.overall == 'pass'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue list \
+            --repo ${{ github.repository }} \
+            --state open \
+            --label "health-check" \
+            --json number \
+            --jq '.[].number' | \
+          xargs -I{} gh issue close {} \
+            --repo ${{ github.repository }} \
+            --comment "✅ Health check passed — closing automatically." || true
