@@ -86,7 +86,7 @@ jobs:
       - name: Live — homepage returns 200
         id: live_home
         run: |
-          HTTP=$(curl -s -o /tmp/homepage.html -w "%{http_code}" --max-time 20 https://bravesdashboards.com)
+          HTTP=$(curl -s -o /tmp/homepage.html -w "%{http_code}" --max-time 20 https://bravesdashboards.com) || HTTP="000"
           if [ "$HTTP" = "200" ]; then
             echo "  ✅ Homepage: HTTP $HTTP" >> $GITHUB_STEP_SUMMARY
             echo "home_fail=0" >> $GITHUB_OUTPUT
@@ -112,7 +112,7 @@ jobs:
       - name: Live — security headers present
         id: live_headers
         run: |
-          HEADERS=$(curl -s -I --max-time 15 https://bravesdashboards.com)
+          HEADERS=$(curl -s -I --max-time 15 https://bravesdashboards.com) || HEADERS=""
           FAILS=0
           for HDR in "x-content-type-options" "x-frame-options" "strict-transport-security" "content-security-policy"; do
             if echo "$HEADERS" | grep -qi "$HDR"; then
@@ -131,7 +131,7 @@ jobs:
             -X POST https://bravesdashboards.com/api/chat \
             -H "Content-Type: application/json" \
             -H "Origin: https://bravesdashboards.com" \
-            -d '{"messages":[{"role":"user","content":"health check ping — one sentence only"}]}')
+            -d '{"messages":[{"role":"user","content":"health check ping — one sentence only"}]}') || RESP=""
           if echo "$RESP" | grep -q '"text"'; then
             echo "  ✅ Chop Bot API: returned a text response" >> $GITHUB_STEP_SUMMARY
             echo "api_fail=0" >> $GITHUB_OUTPUT
@@ -147,7 +147,7 @@ jobs:
             -X POST https://bravesdashboards.com/api/chat \
             -H "Content-Type: application/json" \
             -H "Origin: https://evil.example.com" \
-            -d '{"messages":[{"role":"user","content":"test"}]}')
+            -d '{"messages":[{"role":"user","content":"test"}]}') || RESP="000"
           if [ "$RESP" = "403" ]; then
             echo "  ✅ CORS enforcement: rejected evil.example.com with 403" >> $GITHUB_STEP_SUMMARY
             echo "cors_enforce_fail=0" >> $GITHUB_OUTPUT
