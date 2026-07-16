@@ -161,23 +161,22 @@ jobs:
         id: collate
         if: always()
         run: |
-          TOTAL_FAILS=$(( \
-            ${{ steps.static_dom.outputs.dom_fails || 0 }} + \
-            ${{ steps.static_js.outputs.js_fails || 0 }} + \
-            ${{ steps.static_stale.outputs.stale_fails || 0 }} + \
-            ${{ steps.static_cors.outputs.cors_fail || 0 }} + \
-            ${{ steps.static_https.outputs.https_fail || 0 }} + \
-            ${{ steps.live_home.outputs.home_fail || 0 }} + \
-            ${{ steps.live_dom.outputs.live_dom_fails || 0 }} + \
-            ${{ steps.live_headers.outputs.header_fails || 0 }} + \
-            ${{ steps.live_api.outputs.api_fail || 0 }} + \
-            ${{ steps.live_cors.outputs.cors_enforce_fail || 0 }} \
-          ))
+          F1="${{ steps.static_dom.outputs.dom_fails }}"
+          F2="${{ steps.static_js.outputs.js_fails }}"
+          F3="${{ steps.static_stale.outputs.stale_fails }}"
+          F4="${{ steps.static_cors.outputs.cors_fail }}"
+          F5="${{ steps.static_https.outputs.https_fail }}"
+          F6="${{ steps.live_home.outputs.home_fail }}"
+          F7="${{ steps.live_dom.outputs.live_dom_fails }}"
+          F8="${{ steps.live_headers.outputs.header_fails }}"
+          F9="${{ steps.live_api.outputs.api_fail }}"
+          F10="${{ steps.live_cors.outputs.cors_enforce_fail }}"
+          TOTAL_FAILS=$(( ${F1:-0}+${F2:-0}+${F3:-0}+${F4:-0}+${F5:-0}+${F6:-0}+${F7:-0}+${F8:-0}+${F9:-0}+${F10:-0} ))
           DATE=$(date -u '+%Y-%m-%d')
           if [ "$TOTAL_FAILS" -eq 0 ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "## ✅ HEALTHY — $DATE" >> $GITHUB_STEP_SUMMARY
-            echo "All ${{ strategy.job-total || '10' }} checks passed. bravesdashboards.com is live and healthy." >> $GITHUB_STEP_SUMMARY
+            echo "All 10 checks passed. bravesdashboards.com is live and healthy." >> $GITHUB_STEP_SUMMARY
             echo "overall=pass" >> $GITHUB_OUTPUT
           else
             echo "" >> $GITHUB_STEP_SUMMARY
