@@ -204,15 +204,13 @@ jobs:
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           EXISTING=$(gh issue list --repo ${{ github.repository }} --state open --label "health-check" --json number --jq length)
           if [ "$EXISTING" -eq 0 ]; then
+            printf 'The daily health check failed on **%s**.\n\nSee the [full workflow run](%s) for which checks failed and why.\n\nThis issue will be closed automatically when the next health check passes.' \
+              "$DATE" "$RUN_URL" > /tmp/issue_body.md
             gh issue create \
               --repo ${{ github.repository }} \
               --title "⚠️ Health check failed — $DATE" \
               --label "health-check" \
-              --body "The daily health check failed on **$DATE**.
-
-See the [full workflow run]($RUN_URL) for which checks failed and why.
-
-This issue will be closed automatically when the next health check passes." || true
+              --body-file /tmp/issue_body.md || true
           fi
 
       - name: Close any open health-check issues on pass
