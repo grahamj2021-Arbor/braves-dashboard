@@ -200,7 +200,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          DATE=${{ steps.collate.outputs.date }}
+          DATE="${{ steps.collate.outputs.date }}"
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           EXISTING=$(gh issue list --repo ${{ github.repository }} --state open --label "health-check" --json number --jq length)
           if [ "$EXISTING" -eq 0 ]; then
