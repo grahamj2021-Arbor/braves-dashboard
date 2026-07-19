@@ -35,7 +35,7 @@ jobs:
         id: static_js
         run: |
           FAILS=0
-          for FN in "refreshAll" "fetchLiveData" "mergeLiveData" "updateHdrContext" "localTake" "renderOverview" "renderCards"; do
+          for FN in "refreshAll" "fetchLiveData" "mergeLiveData" "updateHdrContext" "renderOverview" "renderCards"; do
             if grep -q "$FN" index.html; then
               echo "  ✅ $FN()" >> $GITHUB_STEP_SUMMARY
             else
@@ -43,6 +43,13 @@ jobs:
               FAILS=$((FAILS+1))
             fi
           done
+          # localTake is the server-side fallback in api/chat.js, not index.html
+          if grep -q "localTake" api/chat.js; then
+            echo "  ✅ localTake() [api/chat.js]" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "  ❌ MISSING: localTake() [api/chat.js]" >> $GITHUB_STEP_SUMMARY
+            FAILS=$((FAILS+1))
+          fi
           echo "js_fails=$FAILS" >> $GITHUB_OUTPUT
 
       - name: Static — no stale AI-insight references
