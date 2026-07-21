@@ -2,7 +2,7 @@ name: Daily Health Check
 
 on:
   schedule:
-    - cron: '0 13 * * *'   # 9 AM ET every day
+    - cron: '0 11 * * *'   # targets 9 AM ET; runs early to absorb GitHub cron queue lag (observed 1–2 hrs)
   workflow_dispatch:         # manual trigger any time
 
 jobs:
@@ -15,7 +15,8 @@ jobs:
 
     steps:
       # ── 1. STATIC CHECKS (no network needed) ────────────────────────────
-      - uses: actions/checkout@v4
+      - name: Checkout
+        run: git clone --depth 1 "https://github.com/${{ github.repository }}.git" .
 
       - name: Static — key DOM IDs present in source
         id: static_dom
