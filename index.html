@@ -1163,7 +1163,7 @@ function renderOverview(d){
   const ord=n=>n==null?'':(['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th'][n-1]||`${n}th`);
   const nleSub=d.record.nleRank?`${ord(d.record.nleRank)} NL East`:'NL East';
   const nlSub=d.record.nlRank===1?'Best in NL':d.record.nlRank?`${ord(d.record.nlRank)} in NL`:'NL Win %';
-  const recColor=d.record.nleRank===1?'var(--green)':d.record.nleRank===2?'var(--yellow)':'var(--crimson)';
+  const recColor=d.record.nleRank===1?'var(--green)':d.record.nleRank===2?'var(--yellow)':d.record.nleRank?'var(--crimson)':'var(--dim)';
   const wpctColor=d.record.nlRank===1?'var(--green)':d.record.nlRank&&d.record.nlRank<=4?'var(--yellow)':'var(--crimson)';
   const homePct=(()=>{const[hw,hl]=String(d.record.home||'0-0').split('-').map(Number);return(hw+hl)?hw/(hw+hl):0;})();
   const awayPct=(()=>{const[aw,al]=String(d.record.away||'0-0').split('-').map(Number);return(aw+al)?aw/(aw+al):0;})();
@@ -1207,7 +1207,7 @@ function renderOverview(d){
       <div class="ct" style="color:var(--green)">🏆 TOP PERFORMERS <span style="font-size:9px;color:${d._liveSource?'var(--green)':'var(--yellow)'}">● ${d._liveSource?'LIVE':'SEED'}</span></div>
       <div class="plist">
         ${tb?`<div class="prow">
-          <div class="ptop"><div class="prn">${tb.name}</div><span class="prp bat">TOP BATTER</span></div>
+          <div class="ptop"><div class="prn">${pcEsc(tb.name)}</div><span class="prp bat">TOP BATTER</span></div>
           <div class="prstats" style="grid-template-columns:repeat(3,1fr)">
             <div class="pri"><div class="pril">HR</div>${badge(tb.hr,MLB_BAT.hr,false,v=>v)}</div>
             <div class="pri"><div class="pril">RBI</div>${badge(tb.rbi,MLB_BAT.rbi,false,v=>v)}</div>
@@ -1215,7 +1215,7 @@ function renderOverview(d){
           </div>
         </div>`:''}
         ${tp?`<div class="prow">
-          <div class="ptop"><div class="prn">${tp.name}</div><span class="prp ${tp.pos.toLowerCase()}">TOP PITCHER</span></div>
+          <div class="ptop"><div class="prn">${pcEsc(tp.name)}</div><span class="prp ${pcEsc(tp.pos).toLowerCase()}">TOP PITCHER</span></div>
           <div class="prstats" style="grid-template-columns:repeat(3,1fr)">
             <div class="pri"><div class="pril">ERA</div>${badge(tp.era,MLB_PIT.era,true,v=>v.toFixed(2))}</div>
             <div class="pri"><div class="pril">W</div><span class="badge bg">${tp.w}</span></div>
@@ -1259,12 +1259,12 @@ function renderStats(d){
     <div class="card">
       <div class="ct" style="color:var(--green)">🏏 BATTING</div>
       <div style="font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:8px">MLB AVG → ${MLB_BAT.avg.toFixed(3)} / ${MLB_BAT.obp.toFixed(3)} OBP / ${MLB_BAT.ops.toFixed(3)} OPS ${MLB_BAT._live?'<span style="color:var(--green)">● LIVE</span>':''}</div>
-      <div class="plist">${d.batters.map(b=>`<div class="prow"><div class="ptop"><div class="prn">${b.name}</div><span class="prp bat">${b.pos}</span></div><div class="prstats"><div class="pri"><div class="pril">AVG</div>${badge(b.avg,MLB_BAT.avg,false,v=>v.toFixed(3))}</div><div class="pri"><div class="pril">OPS</div>${badge(b.ops,MLB_BAT.ops,false,v=>v.toFixed(3))}</div><div class="pri"><div class="pril">OBP</div>${badge(b.obp,MLB_BAT.obp,false,v=>v.toFixed(3))}</div><div class="pri"><div class="pril">SLG</div>${badge(b.slg,MLB_BAT.slg,false,v=>v.toFixed(3))}</div><div class="pri"><div class="pril">HR</div>${badge(b.hr,MLB_BAT.hr,false,v=>v)}</div><div class="pri"><div class="pril">RBI</div>${badge(b.rbi,MLB_BAT.rbi,false,v=>v)}</div><div class="pri"><div class="pril">SB</div>${badge(b.sb,MLB_BAT.sb,false,v=>v)}</div></div></div>`).join('')}</div>
+      <div class="plist">${d.batters.map(b=>`<div class="prow"><div class="ptop"><div class="prn">${pcEsc(b.name)}</div><span class="prp bat">${pcEsc(b.pos)}</span></div><div class="prstats"><div class="pri"><div class="pril">AVG</div>${badge(b.avg,MLB_BAT.avg,false,v=>v.toFixed(3))}</div><div class="pri"><div class="pril">OPS</div>${badge(b.ops,MLB_BAT.ops,false,v=>v.toFixed(3))}</div><div class="pri"><div class="pril">OBP</div>${badge(b.obp,MLB_BAT.obp,false,v=>v.toFixed(3))}</div><div class="pri"><div class="pril">SLG</div>${badge(b.slg,MLB_BAT.slg,false,v=>v.toFixed(3))}</div><div class="pri"><div class="pril">HR</div>${badge(b.hr,MLB_BAT.hr,false,v=>v)}</div><div class="pri"><div class="pril">RBI</div>${badge(b.rbi,MLB_BAT.rbi,false,v=>v)}</div><div class="pri"><div class="pril">SB</div>${badge(b.sb,MLB_BAT.sb,false,v=>v)}</div></div></div>`).join('')}</div>
     </div>
     <div class="card">
       <div class="ct" style="color:var(--red)">⚾ PITCHING</div>
       <div style="font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:8px">MLB AVG → ${MLB_PIT.era.toFixed(2)} ERA / ${MLB_PIT.whip.toFixed(2)} WHIP / ${MLB_PIT.k9.toFixed(1)} K/9 ${MLB_PIT._live?'<span style="color:var(--green)">● LIVE</span>':''}</div>
-      <div class="plist">${d.pitchers.map(p=>`<div class="prow"><div class="ptop"><div class="prn">${p.name}</div><span class="prp ${p.pos.toLowerCase()}">${p.pos}</span></div><div class="prstats"><div class="pri"><div class="pril">ERA</div>${badge(p.era,MLB_PIT.era,true,v=>v.toFixed(2))}</div><div class="pri"><div class="pril">WHIP</div>${badge(p.whip,MLB_PIT.whip,true,v=>v.toFixed(2))}</div><div class="pri"><div class="pril">K/9</div>${badge(p.k9,MLB_PIT.k9,false,v=>v.toFixed(1))}</div><div class="pri"><div class="pril">BB/9</div>${badge(p.bb9,MLB_PIT.bb9,true,v=>v.toFixed(1))}</div><div class="pri"><div class="pril">FIP</div>${badge(p.fip,MLB_PIT.fip,true,v=>v.toFixed(2))}</div><div class="pri"><div class="pril">${p.pos==='RP'?'SV':'W'}</div><span class="badge bg">${p.pos==='RP'?p.sv:p.w}</span></div></div></div>`).join('')}</div>
+      <div class="plist">${d.pitchers.map(p=>`<div class="prow"><div class="ptop"><div class="prn">${pcEsc(p.name)}</div><span class="prp ${pcEsc(p.pos).toLowerCase()}">${pcEsc(p.pos)}</span></div><div class="prstats"><div class="pri"><div class="pril">ERA</div>${badge(p.era,MLB_PIT.era,true,v=>v.toFixed(2))}</div><div class="pri"><div class="pril">WHIP</div>${badge(p.whip,MLB_PIT.whip,true,v=>v.toFixed(2))}</div><div class="pri"><div class="pril">K/9</div>${badge(p.k9,MLB_PIT.k9,false,v=>v.toFixed(1))}</div><div class="pri"><div class="pril">BB/9</div>${badge(p.bb9,MLB_PIT.bb9,true,v=>v.toFixed(1))}</div><div class="pri"><div class="pril">FIP</div>${badge(p.fip,MLB_PIT.fip,true,v=>v.toFixed(2))}</div><div class="pri"><div class="pril">${p.pos==='RP'?'SV':'W'}</div><span class="badge bg">${p.pos==='RP'?p.sv:p.w}</span></div></div></div>`).join('')}</div>
     </div>`;
 }
 
@@ -1281,7 +1281,7 @@ function renderStandings(d){
       <div class="ct" style="color:${div.league==='NL'?'var(--green)':'#60a5fa'}">${div.name}</div>
       <table class="stbl">
         <thead><tr><th>TEAM</th><th>W</th><th>L</th><th>PCT</th><th>GB</th></tr></thead>
-        <tbody>${div.teams.map((t,i)=>`<tr class="${t.abbr==='ATL'?'me':''}"><td>${i===0?'🥇 ':''}${t.abbr==='ATL'?`<strong>${t.name}</strong>`:t.name}</td><td style="color:var(--green)">${t.w}</td><td style="color:var(--crimson)">${t.l}</td><td>${pct(t.w,t.l)}</td><td style="color:var(--muted)">${gb(leader.w,leader.l,t.w,t.l)}</td></tr>`).join('')}</tbody>
+        <tbody>${div.teams.map((t,i)=>`<tr class="${t.abbr==='ATL'?'me':''}"><td>${i===0?'🥇 ':''}${t.abbr==='ATL'?`<strong>${pcEsc(t.name)}</strong>`:pcEsc(t.name)}</td><td style="color:var(--green)">${t.w}</td><td style="color:var(--crimson)">${t.l}</td><td>${pct(t.w,t.l)}</td><td style="color:var(--muted)">${gb(leader.w,leader.l,t.w,t.l)}</td></tr>`).join('')}</tbody>
       </table>
     </div>`;
   };
@@ -1296,13 +1296,13 @@ function renderStandings(d){
       <div style="font-size:10px;color:var(--dim);letter-spacing:1px;margin-bottom:10px">Refreshes every 2 min · last sync ${stamp()}</div>
       <table class="stbl">
         <thead><tr><th>TEAM</th><th>W</th><th>L</th><th>PCT</th><th>GB</th></tr></thead>
-        <tbody>${nle.map((t,i)=>`<tr class="${t.abbr==='ATL'?'me':''}"><td>${i===0?'🥇 ':''}${t.abbr==='ATL'?`<strong>${t.name}</strong>`:t.name}</td><td style="color:var(--green)">${t.w}</td><td style="color:var(--crimson)">${t.l}</td><td>${pct(t.w,t.l)}</td><td style="color:var(--muted)">${gb(top.w,top.l,t.w,t.l)}</td></tr>`).join('')}</tbody>
+        <tbody>${nle.map((t,i)=>`<tr class="${t.abbr==='ATL'?'me':''}"><td>${i===0?'🥇 ':''}${t.abbr==='ATL'?`<strong>${pcEsc(t.name)}</strong>`:pcEsc(t.name)}</td><td style="color:var(--green)">${t.w}</td><td style="color:var(--crimson)">${t.l}</td><td>${pct(t.w,t.l)}</td><td style="color:var(--muted)">${gb(top.w,top.l,t.w,t.l)}</td></tr>`).join('')}</tbody>
       </table>
     </div>
     <div class="card" style="border-color:#60a5fa33">
       <div class="ct" style="color:#60a5fa">📊 MLB TOP TEAMS · WIN %</div>
       ${atlMlbRank?`<div style="font-size:11px;color:var(--muted);margin-bottom:8px">🪓 Braves rank <strong style="color:var(--green)">#${atlMlbRank}</strong> in MLB</div>`:''}
-      ${mlbTop.map((t,i)=>{const p=t.w/(t.w+t.l);return`<div class="rbrow"><span class="rbn">#${i+1}</span><span class="rbnm" style="${t.abbr==='ATL'?'color:var(--green);font-weight:700':''}">${t.abbr==='ATL'?'🪓 ':''}${t.name} <span style="color:var(--dim);font-family:JetBrains Mono,monospace;font-size:11px">(${t.w}-${t.l})</span></span><div class="rbw"><div class="rbb" style="width:${p*100}%;background:${t.abbr==='ATL'?'var(--green)':'#60a5fa'}"></div></div><span class="rbp" style="${t.abbr==='ATL'?'color:var(--green)':''}">${pct(t.w,t.l)}</span></div>`}).join('')}
+      ${mlbTop.map((t,i)=>{const p=t.w/(t.w+t.l);return`<div class="rbrow"><span class="rbn">#${i+1}</span><span class="rbnm" style="${t.abbr==='ATL'?'color:var(--green);font-weight:700':''}">${t.abbr==='ATL'?'🪓 ':''}${pcEsc(t.name)} <span style="color:var(--dim);font-family:JetBrains Mono,monospace;font-size:11px">(${t.w}-${t.l})</span></span><div class="rbw"><div class="rbb" style="width:${p*100}%;background:${t.abbr==='ATL'?'var(--green)':'#60a5fa'}"></div></div><span class="rbp" style="${t.abbr==='ATL'?'color:var(--green)':''}">${pct(t.w,t.l)}</span></div>`}).join('')}
     </div>
     ${divisions.length?`<div class="card" style="border-color:#facc1533">
       <div class="ct" style="color:var(--yellow)">🗺️ EVERY DIVISION</div>

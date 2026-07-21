@@ -90,6 +90,49 @@ jobs:
             echo "https_fail=0" >> $GITHUB_OUTPUT
           fi
 
+      - name: Static — player names escaped before innerHTML
+        id: static_xss
+        run: |
+          FAILS=0
+          for SYM in "pcEsc(b.name)" "pcEsc(p.name)" "pcEsc(tb.name)" "pcEsc(tp.name)" "pcEsc(t.name)"; do
+            if grep -qF "$SYM" index.html; then
+              echo "  ✅ $SYM" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "  ❌ MISSING XSS GUARD: $SYM" >> $GITHUB_STEP_SUMMARY
+              FAILS=$((FAILS+1))
+            fi
+          done
+          echo "xss_fails=$FAILS" >> $GITHUB_OUTPUT
+
+      - name: Static — no eval() in client code
+        id: static_eval
+        run: |
+          if grep -qP '\beval\s*\(' index.html; then
+            echo "  ❌ eval() found in index.html" >> $GITHUB_STEP_SUMMARY
+            echo "eval_fail=1" >> $GITHUB_OUTPUT
+          else
+            echo "  ✅ No eval() in client code" >> $GITHUB_STEP_SUMMARY
+            echo "eval_fail=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Static — API key from environment only
+        id: static_apikey
+        run: |
+          FAILS=0
+          if grep -q "process.env.OPENROUTER_API_KEY" api/chat.js; then
+            echo "  ✅ OPENROUTER_API_KEY read from process.env" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "  ❌ OPENROUTER_API_KEY not found in api/chat.js" >> $GITHUB_STEP_SUMMARY
+            FAILS=$((FAILS+1))
+          fi
+          if grep -qP 'sk-or-[a-zA-Z0-9_-]{20,}' api/chat.js index.html 2>/dev/null; then
+            echo "  ❌ Hardcoded OpenRouter key detected in source!" >> $GITHUB_STEP_SUMMARY
+            FAILS=$((FAILS+1))
+          else
+            echo "  ✅ No hardcoded API key in source files" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "apikey_fails=$FAILS" >> $GITHUB_OUTPUT
+
       # ── 2. LIVE ENDPOINT CHECKS ─────────────────────────────────────────
       - name: Live — homepage returns 200
         id: live_home
@@ -179,12 +222,15 @@ jobs:
           F8="${{ steps.live_headers.outputs.header_fails }}"
           F9="${{ steps.live_api.outputs.api_fail }}"
           F10="${{ steps.live_cors.outputs.cors_enforce_fail }}"
-          TOTAL_FAILS=$(( ${F1:-0}+${F2:-0}+${F3:-0}+${F4:-0}+${F5:-0}+${F6:-0}+${F7:-0}+${F8:-0}+${F9:-0}+${F10:-0} ))
+          F11="${{ steps.static_xss.outputs.xss_fails }}"
+          F12="${{ steps.static_eval.outputs.eval_fail }}"
+          F13="${{ steps.static_apikey.outputs.apikey_fails }}"
+          TOTAL_FAILS=$(( ${F1:-0}+${F2:-0}+${F3:-0}+${F4:-0}+${F5:-0}+${F6:-0}+${F7:-0}+${F8:-0}+${F9:-0}+${F10:-0}+${F11:-0}+${F12:-0}+${F13:-0} ))
           DATE=$(date -u '+%Y-%m-%d')
           if [ "$TOTAL_FAILS" -eq 0 ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "## ✅ HEALTHY — $DATE" >> $GITHUB_STEP_SUMMARY
-            echo "All 10 checks passed. bravesdashboards.com is live and healthy." >> $GITHUB_STEP_SUMMARY
+            echo "All 13 checks passed. bravesdashboards.com is live and healthy." >> $GITHUB_STEP_SUMMARY
             echo "overall=pass" >> $GITHUB_OUTPUT
           else
             echo "" >> $GITHUB_STEP_SUMMARY
