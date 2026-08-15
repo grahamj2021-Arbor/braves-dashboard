@@ -281,3 +281,32 @@ jobs:
           xargs -I{} gh issue close {} \
             --repo ${{ github.repository }} \
             --comment "✅ Health check passed — closing automatically." || true
+
+      # ── 4. SLACK NOTIFICATION ────────────────────────────────────────────
+      # Requires SLACK_BOT_TOKEN and SLACK_CHANNEL_ID repository secrets.
+      # SLACK_BOT_TOKEN: a Slack bot token (xoxb-...) with chat:write scope.
+      # SLACK_CHANNEL_ID: the channel or DM ID to post to (e.g. C0123456789).
+      # If either secret is absent the step is skipped silently.
+      - name: Notify Slack
+        if: always() && secrets.SLACK_BOT_TOKEN != '' && secrets.SLACK_CHANNEL_ID != ''
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+          OVERALL: ${{ steps.collate.outputs.overall }}
+          DATE: ${{ steps.collate.outputs.date }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ "$OVERALL" = "pass" ]; then
+            TEXT="✅ HEALTHY — ${DATE} — all live + static checks passed. <${RUN_URL}|View run>"
+          else
+            TEXT="❌ UNHEALTHY — ${DATE} — one or more checks failed. <${RUN_URL}|View run>"
+          fi
+          curl -s -X POST https://slack.com/api/chat.postMessage \
+            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"channel\":\"${SLACK_CHANNEL_ID}\",\"text\":\"${TEXT}\"}" \
+            -o /tmp/slack_resp.json
+          # Surface the error in the log without failing the workflow
+          cat /tmp/slack_resp.json | grep -q '"ok":true' \
+            && echo "Slack notification sent." \
+            || { echo "Slack API error:"; cat /tmp/slack_resp.json; }
