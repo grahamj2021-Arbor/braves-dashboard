@@ -3,9 +3,8 @@
 const MLB_BAT={avg:.248,obp:.318,slg:.413,ops:.731,hr:14,rbi:52,sb:8,_live:false};
 const MLB_PIT={era:4.20,whip:1.28,k9:8.8,bb9:3.2,fip:4.15,_live:false};
 let DATA=null, currentTab='overview', refreshTimer=null, lastRenderTime=0;
-let schedView='upcoming';   // Schedule tab segment: 'upcoming' | 'results'
 let playerQuery='';         // Shared search filter for Stats + Cards tabs
-const TABS=['overview','cards','schedule','trends','stats','standings'];
+const TABS=['overview','cards','trends','stats','standings'];
 
 // ── HEALTH MONITOR ──
 const HEALTH=(()=>{
@@ -583,38 +582,6 @@ function mergeLiveData(seed,live){
     d.nextOpp={...d.nextOpp,abbr:upcoming[0].opp};
   }
 
-  // ── Full-season schedule for the Schedule tab ──
-  // Prefer the season-wide feed; fall back to the ±2-week window if it failed.
-  const schedDone=[],schedNext=[];
-  const seasonDates=live.seasonSchedule?.dates;
-  if(seasonDates&&seasonDates.length){
-    for(const day of seasonDates){
-      for(const g of day.games||[]){
-        const isHome=g.teams?.home?.team?.id===ATL_ID;
-        const atlT=isHome?g.teams.home:g.teams.away;
-        const oppT=isHome?g.teams.away:g.teams.home;
-        if(!oppT?.team)continue;
-        const state=g.status?.abstractGameState;
-        const row={
-          isoDate:day.date,
-          date:_shortDate(day.date),
-          opp:oppT.team.abbreviation||oppT.team.name,
-          isHome,
-          venue:g.venue?.name||''
-        };
-        if(state==='Final'){
-          const ar=atlT.score??0,or=oppT.score??0;
-          schedDone.push({...row,r:ar>or?'W':'L',score:`${ar}-${or}`});
-        }else{
-          schedNext.push({...row,time:_gameTime(g.gameDate)});
-        }
-      }
-    }
-  }
-  d.schedule={
-    completed:schedDone.length?schedDone:completed.map(g=>({isoDate:g.date,date:_shortDate(g.date),opp:g.opp,isHome:g.isHome,venue:g.venue||'',r:g.r,score:g.score})),
-    upcoming: schedNext.length?schedNext:upcoming.map(g=>({isoDate:g.date,date:_shortDate(g.date),opp:g.opp,isHome:g.isHome,venue:g.venue||'',time:_gameTime(g.gameDate)}))
-  };
   // ── Live player stats ──
   // Build position + jersey maps from active roster
   const posMap={},jerseyMap={};
@@ -997,7 +964,6 @@ function renderTab(tab){
   const fns={
     overview:()=>renderOverview(d),
     cards:()=>renderCards(d),
-    schedule:()=>renderSchedule(d),
     trends:()=>renderTrends(d),
     stats:()=>renderStats(d),
     standings:()=>renderStandings(d),
@@ -1160,52 +1126,6 @@ function renderOverview(d){
     </div>`;
 }
 
-// ── SCHEDULE ──
-function renderSchedule(d){
-  // Before the first live sync, fall back to the SEED preview data so the tab
-  // is never blank on boot.
-  const sc=d.schedule||{
-    completed:(d.lastGame?.recentResults||[]).map(g=>({date:g.date,opp:g.opp,r:g.r,score:g.score,isHome:true,venue:''})),
-    upcoming:(d.nextGames||[]).map(g=>({date:g.date,opp:g.opp,time:g.time,isHome:/truist/i.test(g.loc||''),venue:g.loc||''}))
-  };
-  const upcoming=sc.upcoming||[];
-  const results=[...(sc.completed||[])].reverse(); // most recent first
-
-  const upRows=upcoming.length?upcoming.map(g=>`
-    <div class="sch-row">
-      <div class="sch-date">${pcEsc(g.date)}</div>
-      <div class="sch-opp">${g.isHome?'vs':'@'} ${pcEsc(g.opp)}
-        <span class="sch-loc">${g.isHome?'· Truist Park':(g.venue?'· '+pcEsc(g.venue):'')}</span>
-      </div>
-      <div class="sch-time">${pcEsc(g.time||'TBD')}</div>
-    </div>`).join('')
-    :`<div class="sch-empty">No upcoming games scheduled ⚾</div>`;
-
-  const wins=results.filter(g=>g.r==='W').length;
-  const resRows=results.length?results.map(g=>`
-    <div class="sch-row">
-      <div class="sch-date">${pcEsc(g.date)}</div>
-      <div class="sch-opp">${g.isHome?'vs':'@'} ${pcEsc(g.opp)}</div>
-      <div class="sch-res" style="color:${g.r==='W'?'var(--green)':'var(--crimson)'}">${pcEsc(g.r)}</div>
-      <div class="sch-score">${pcEsc(g.score)}</div>
-    </div>`).join('')
-    :`<div class="sch-empty">No completed games yet ⚾</div>`;
-
-  const showUp=schedView==='upcoming';
-  document.getElementById('content').innerHTML=`
-    <div class="card">
-      <div class="ct" style="color:var(--green)">📅 SCHEDULE</div>
-      <div style="font-size:10px;color:var(--dim);letter-spacing:1px;margin-bottom:10px">
-        ${results.length} played · ${upcoming.length} remaining · last sync ${stamp()}
-      </div>
-      <div class="sch-seg">
-        <button data-sched="upcoming" class="${showUp?'on':''}">Upcoming</button>
-        <button data-sched="results" class="${showUp?'':'on'}">Results${results.length?` · ${wins}-${results.length-wins}`:''}</button>
-      </div>
-      ${showUp?upRows:resRows}
-    </div>`;
-}
-
 // ── STATISTICS ──
 function renderStats(d){
   const src=d._liveSource?`<span style="color:var(--green)">● LIVE — Updated ${stamp()}</span>`:`<span style="color:var(--yellow)">● SEED DATA — Live fetch failed, retrying…</span>`;
@@ -1218,7 +1138,7 @@ function renderStats(d){
   document.getElementById('content').innerHTML=`
     <div style="font-size:11px;margin-bottom:10px">${src}</div>
     ${searchBoxHtml(q?`${batters.length+pitchers.length} player${batters.length+pitchers.length===1?'':'s'} match “${pcEsc(playerQuery.trim())}”`:'')}
-    ${noHits?`<div class="sch-empty">No players match “${pcEsc(playerQuery.trim())}” ⚾</div>`:''}
+    ${noHits?`<div class="empty-msg">No players match “${pcEsc(playerQuery.trim())}” ⚾</div>`:''}
     <div class="leg"><span><span class="dot" style="background:var(--green)"></span>Above MLB Avg</span><span><span class="dot" style="background:var(--yellow)"></span>Near Avg</span><span><span class="dot" style="background:var(--crimson)"></span>Below Avg</span></div>
     ${batters.length?`<div class="card">
       <div class="ct" style="color:var(--green)">🏏 BATTING</div>
@@ -1696,7 +1616,7 @@ function renderCards(d){
       <div class="cards-intro">Original Braves trading-card design. Photos via MLB's public headshot CDN. <strong>Tap any card to flip</strong> and see live stats — colors compare each stat to the MLB average (green = better, yellow = near average, red = below).</div>
     </div>
     ${searchBoxHtml(q?`${total} player${total===1?'':'s'} match “${pcEsc(playerQuery.trim())}”`:'')}
-    ${q&&!total?`<div class="sch-empty">No players match “${pcEsc(playerQuery.trim())}” ⚾</div>`:''}
+    ${q&&!total?`<div class="empty-msg">No players match “${pcEsc(playerQuery.trim())}” ⚾</div>`:''}
     ${section(q?'BATTERS':'TOP BATTERS · OPS LEADERS','var(--green)','🏏',batters,'b')}
     ${section('STARTING ROTATION','#60a5fa','🎯',starters,'p')}
     ${section('BULLPEN','#f87171','🔒',bullpen,'p')}
@@ -1822,10 +1742,6 @@ document.addEventListener('click',e=>{
   // Bottom nav
   const nav=e.target.closest('.nbtn[data-tab]');
   if(nav){showTab(nav.dataset.tab);return;}
-
-  // Schedule tab segmented control
-  const seg=e.target.closest('[data-sched]');
-  if(seg){schedView=seg.dataset.sched;renderTab('schedule');return;}
 
   // Analyst feed article -> open in a new tab
   const art=e.target.closest('.social-item[data-url]');

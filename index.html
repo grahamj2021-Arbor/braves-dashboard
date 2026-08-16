@@ -266,19 +266,7 @@
     .social-hdl{font-size:13px;font-weight:700;line-height:1.4;color:var(--text);margin-bottom:3px}
     .social-desc{font-size:11px;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
-    /* ── SCHEDULE TAB ── */
-    .sch-seg{display:flex;gap:6px;margin-bottom:12px}
-    .sch-seg button{flex:1;padding:9px 6px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--dim);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;transition:all .15s}
-    .sch-seg button.on{border-color:var(--green);color:var(--green);background:#22c55e12}
-    .sch-row{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--border)}
-    .sch-row:last-child{border-bottom:none}
-    .sch-date{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);width:52px;flex-shrink:0}
-    .sch-opp{font-size:13px;font-weight:700;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .sch-loc{font-size:10px;color:var(--dim);font-weight:400}
-    .sch-res{font-family:'Anton',sans-serif;font-size:15px;width:18px;text-align:center;flex-shrink:0}
-    .sch-score{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);width:44px;text-align:right;flex-shrink:0}
-    .sch-time{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);width:64px;text-align:right;flex-shrink:0}
-    .sch-empty{text-align:center;color:var(--dim);padding:24px;font-size:13px}
+    .empty-msg{text-align:center;color:var(--dim);padding:24px;font-size:13px}
 
     /* ── WILD CARD ── */
     .wc-row{display:flex;align-items:center;gap:9px;padding:8px 2px;border-bottom:1px solid var(--border)}
@@ -355,7 +343,6 @@
     <div class="bnav-inner">
       <button class="nbtn active" data-tab="overview"><span class="ni">🏠</span><span class="nl">Home</span></button>
       <button class="nbtn" data-tab="cards"><span class="ni">🎴</span><span class="nl">Cards</span></button>
-      <button class="nbtn" data-tab="schedule"><span class="ni">📅</span><span class="nl">Schedule</span></button>
       <button class="nbtn" data-tab="trends"><span class="ni">📉</span><span class="nl">Trends</span></button>
       <button class="nbtn" data-tab="stats"><span class="ni">📈</span><span class="nl">Stats</span></button>
       <button class="nbtn" data-tab="standings"><span class="ni">📊</span><span class="nl">Standings</span></button>

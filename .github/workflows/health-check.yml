@@ -36,7 +36,7 @@ jobs:
         id: static_js
         run: |
           FAILS=0
-          for FN in "refreshAll" "fetchLiveData" "mergeLiveData" "updateHdrContext" "renderOverview" "renderCards" "renderSchedule" "applyTab" "bindDynamic"; do
+          for FN in "refreshAll" "fetchLiveData" "mergeLiveData" "updateHdrContext" "renderOverview" "renderCards" "applyTab" "bindDynamic"; do
             if grep -q "$FN" app.js; then
               echo "  ✅ $FN()" >> $GITHUB_STEP_SUMMARY
             else
