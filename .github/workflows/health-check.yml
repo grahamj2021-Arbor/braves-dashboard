@@ -324,7 +324,7 @@ jobs:
       # SLACK_CHANNEL_ID: the channel or DM ID to post to (e.g. C0123456789).
       # If either secret is absent the step is skipped silently.
       - name: Notify Slack
-        if: always() && secrets.SLACK_BOT_TOKEN != '' && secrets.SLACK_CHANNEL_ID != ''
+        if: always()
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
@@ -332,6 +332,12 @@ jobs:
           DATE: ${{ steps.collate.outputs.date }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          # `secrets` is not available in step `if:` conditions, so the
+          # presence check has to happen here in the shell instead.
+          if [ -z "$SLACK_BOT_TOKEN" ] || [ -z "$SLACK_CHANNEL_ID" ]; then
+            echo "Slack secrets not configured — skipping notification."
+            exit 0
+          fi
           if [ "$OVERALL" = "pass" ]; then
             TEXT="✅ HEALTHY — ${DATE} — all live + static checks passed. <${RUN_URL}|View run>"
           else
