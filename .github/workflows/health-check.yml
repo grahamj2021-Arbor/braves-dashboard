@@ -36,8 +36,8 @@ jobs:
         id: static_js
         run: |
           FAILS=0
-          for FN in "refreshAll" "fetchLiveData" "mergeLiveData" "updateHdrContext" "renderOverview" "renderCards"; do
-            if grep -q "$FN" index.html; then
+          for FN in "refreshAll" "fetchLiveData" "mergeLiveData" "updateHdrContext" "renderOverview" "renderCards" "renderSchedule" "applyTab" "bindDynamic"; do
+            if grep -q "$FN" app.js; then
               echo "  ✅ $FN()" >> $GITHUB_STEP_SUMMARY
             else
               echo "  ❌ MISSING: $FN()" >> $GITHUB_STEP_SUMMARY
@@ -58,7 +58,7 @@ jobs:
         run: |
           STALE=0
           for SYM in "aiInsightCache" "aiInsightTimer" "fetchAiInsight"; do
-            if grep -q "$SYM" index.html; then
+            if grep -q "$SYM" app.js; then
               echo "  ❌ STALE REFERENCE: $SYM" >> $GITHUB_STEP_SUMMARY
               STALE=$((STALE+1))
             fi
@@ -95,7 +95,7 @@ jobs:
         run: |
           FAILS=0
           for SYM in "pcEsc(b.name)" "pcEsc(p.name)" "pcEsc(tb.name)" "pcEsc(tp.name)" "pcEsc(t.name)"; do
-            if grep -qF "$SYM" index.html; then
+            if grep -qF "$SYM" app.js; then
               echo "  ✅ $SYM" >> $GITHUB_STEP_SUMMARY
             else
               echo "  ❌ MISSING XSS GUARD: $SYM" >> $GITHUB_STEP_SUMMARY
@@ -107,8 +107,8 @@ jobs:
       - name: Static — no eval() in client code
         id: static_eval
         run: |
-          if grep -qP '\beval\s*\(' index.html; then
-            echo "  ❌ eval() found in index.html" >> $GITHUB_STEP_SUMMARY
+          if grep -qP '\beval\s*\(' app.js; then
+            echo "  ❌ eval() found in app.js" >> $GITHUB_STEP_SUMMARY
             echo "eval_fail=1" >> $GITHUB_OUTPUT
           else
             echo "  ✅ No eval() in client code" >> $GITHUB_STEP_SUMMARY
@@ -125,13 +125,46 @@ jobs:
             echo "  ❌ OPENROUTER_API_KEY not found in api/chat.js" >> $GITHUB_STEP_SUMMARY
             FAILS=$((FAILS+1))
           fi
-          if grep -qP 'sk-or-[a-zA-Z0-9_-]{20,}' api/chat.js index.html 2>/dev/null; then
+          if grep -qP 'sk-or-[a-zA-Z0-9_-]{20,}' api/chat.js index.html app.js 2>/dev/null; then
             echo "  ❌ Hardcoded OpenRouter key detected in source!" >> $GITHUB_STEP_SUMMARY
             FAILS=$((FAILS+1))
           else
             echo "  ✅ No hardcoded API key in source files" >> $GITHUB_STEP_SUMMARY
           fi
           echo "apikey_fails=$FAILS" >> $GITHUB_OUTPUT
+
+      - name: Static — CSP has no unsafe-inline for scripts
+        id: static_csp
+        run: |
+          FAILS=0
+          if grep -q "script-src 'self' 'unsafe-inline'" vercel.json; then
+            echo "  ❌ script-src still allows 'unsafe-inline'" >> $GITHUB_STEP_SUMMARY
+            FAILS=$((FAILS+1))
+          else
+            echo "  ✅ script-src does not allow 'unsafe-inline'" >> $GITHUB_STEP_SUMMARY
+          fi
+          # Inline on* handlers would be blocked by that CSP at runtime
+          INLINE=$(grep -oP '\son(click|error|load|wheel|change|submit)="' index.html || true)
+          if [ -n "$INLINE" ]; then
+            echo "  ❌ Inline event handlers present in index.html (CSP would block them):" >> $GITHUB_STEP_SUMMARY
+            echo "$INLINE" >> $GITHUB_STEP_SUMMARY
+            FAILS=$((FAILS+1))
+          else
+            echo "  ✅ No inline event handlers in index.html" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "csp_fails=$FAILS" >> $GITHUB_OUTPUT
+
+      - name: Static — app.js parses as valid JavaScript
+        id: static_parse
+        run: |
+          if node --check app.js 2>/tmp/parse.err; then
+            echo "  ✅ app.js parses cleanly" >> $GITHUB_STEP_SUMMARY
+            echo "parse_fail=0" >> $GITHUB_OUTPUT
+          else
+            echo "  ❌ app.js has a syntax error:" >> $GITHUB_STEP_SUMMARY
+            cat /tmp/parse.err >> $GITHUB_STEP_SUMMARY
+            echo "parse_fail=1" >> $GITHUB_OUTPUT
+          fi
 
       # ── 2. LIVE ENDPOINT CHECKS ─────────────────────────────────────────
       - name: Live — homepage returns 200
@@ -150,7 +183,8 @@ jobs:
         id: live_dom
         run: |
           FAILS=0
-          for NEEDLE in "hdr-rec" "hdr-game-strip" "refreshAll" "BRAVES DASHBOARD"; do
+          curl -s -o /tmp/app.js --max-time 20 https://bravesdashboards.com/app.js || true
+          for NEEDLE in "hdr-rec" "hdr-game-strip" "app.js" "BRAVES DASHBOARD"; do
             if grep -q "$NEEDLE" /tmp/homepage.html 2>/dev/null; then
               echo "  ✅ Found in live page: $NEEDLE" >> $GITHUB_STEP_SUMMARY
             else
@@ -225,12 +259,14 @@ jobs:
           F11="${{ steps.static_xss.outputs.xss_fails }}"
           F12="${{ steps.static_eval.outputs.eval_fail }}"
           F13="${{ steps.static_apikey.outputs.apikey_fails }}"
-          TOTAL_FAILS=$(( ${F1:-0}+${F2:-0}+${F3:-0}+${F4:-0}+${F5:-0}+${F6:-0}+${F7:-0}+${F8:-0}+${F9:-0}+${F10:-0}+${F11:-0}+${F12:-0}+${F13:-0} ))
+          F14="${{ steps.static_csp.outputs.csp_fails }}"
+          F15="${{ steps.static_parse.outputs.parse_fail }}"
+          TOTAL_FAILS=$(( ${F1:-0}+${F2:-0}+${F3:-0}+${F4:-0}+${F5:-0}+${F6:-0}+${F7:-0}+${F8:-0}+${F9:-0}+${F10:-0}+${F11:-0}+${F12:-0}+${F13:-0}+${F14:-0}+${F15:-0} ))
           DATE=$(date -u '+%Y-%m-%d')
           if [ "$TOTAL_FAILS" -eq 0 ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "## ✅ HEALTHY — $DATE" >> $GITHUB_STEP_SUMMARY
-            echo "All 13 checks passed. bravesdashboards.com is live and healthy." >> $GITHUB_STEP_SUMMARY
+            echo "All 15 checks passed. bravesdashboards.com is live and healthy." >> $GITHUB_STEP_SUMMARY
             echo "overall=pass" >> $GITHUB_OUTPUT
           else
             echo "" >> $GITHUB_STEP_SUMMARY
