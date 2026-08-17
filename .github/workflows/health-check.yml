@@ -2,7 +2,7 @@ name: Daily Health Check
 
 on:
   schedule:
-    - cron: '0 11 * * *'   # targets 9 AM ET; runs early to absorb GitHub cron queue lag (observed 1–2 hrs)
+    - cron: '0 9 * * *'    # 9 AM UTC (5 AM ET) — runs early so Claude's 11 AM UTC health-check session can read today's live results
   workflow_dispatch:         # manual trigger any time
 
 jobs:
