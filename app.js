@@ -246,6 +246,150 @@ function updateHdrContext(d){
 
 // ── MLB LIVE DATA ──
 const ATL_ID=144, NLE_DIV=204;
+
+// ══════════════════════════════════════════
+// POSTSEASON GOLD THEME
+// Gold accents run from the first day of the Braves' first playoff series
+// until the last day of the World Series — every year, automatically, and
+// only when Atlanta actually qualifies. Everything is driven off the live
+// MLB postseason schedule, so there are no dates to maintain by hand.
+//
+// The regular colour scheme is the default and is never edited. The theme is
+// a single data-postseason attribute on <html> that CSS layers gold on top
+// of; clearing the attribute restores the normal palette exactly.
+// ══════════════════════════════════════════
+const PS_KEY='braves_postseason';
+const PS_ROUND={F:'WILD CARD',D:'NLDS',L:'NLCS',W:'WORLD SERIES',P:'POSTSEASON'};
+const PS_RANK={P:0,F:1,D:2,L:3,W:4};
+// Hard stop. Even a stale or malformed feed can never leave the site gold
+// past this date, and the World Series has always finished well before it.
+const PS_OUTER_BOUND='11-15';
+let POSTSEASON={active:false,label:''};
+
+// ?gold=1 forces the accents on, ?gold=0 forces them off. Manual preview only
+// — it is never persisted, so a normal visit always uses the live schedule.
+function _psOverride(){
+  try{
+    const v=new URLSearchParams(location.search).get('gold');
+    if(v==='1')return true;
+    if(v==='0')return false;
+  }catch(e){}
+  return null;
+}
+
+function _psLoadCache(season){
+  try{
+    const c=JSON.parse(localStorage.getItem(PS_KEY)||'null');
+    if(c&&c.season===season&&typeof c.active==='boolean')return c;
+  }catch(e){}
+  return null;
+}
+function _psSaveCache(o){
+  try{localStorage.setItem(PS_KEY,JSON.stringify({active:!!o.active,label:o.label||'',season:o.season}));}catch(e){}
+}
+
+// Decide the theme from the postseason schedule feed.
+// Returns null when the feed gave us nothing usable, so the caller can keep
+// whatever state it already had instead of flipping the theme on bad data.
+function computePostseason(schedJ,season,todayISO){
+  const games=[];
+  for(const day of schedJ?.dates||[]){
+    for(const g of day.games||[]){
+      const gt=g.gameType||'';
+      if(!PS_ROUND[gt])continue;
+      const hId=g.teams?.home?.team?.id, aId=g.teams?.away?.team?.id;
+      const date=day.date||String(g.gameDate||'').slice(0,10);
+      if(!date)continue;
+      games.push({
+        date,type:gt,
+        final:g.status?.abstractGameState==='Final',
+        homeId:hId,awayId:aId,
+        winnerId:g.teams?.home?.isWinner===true?hId:g.teams?.away?.isWinner===true?aId:null,
+        hasATL:hId===ATL_ID||aId===ATL_ID
+      });
+    }
+  }
+  if(!games.length)return null;
+
+  const atl=games.filter(g=>g.hasATL);
+  if(!atl.length)return{active:false,label:'',season,reason:'Braves are not in the postseason'};
+
+  // Start: first day of Atlanta's first series.
+  const start=atl.map(g=>g.date).sort()[0];
+
+  // End: the last World Series game. A club needs 4 wins to close it out, so
+  // count Final World Series games rather than trusting a scheduled count.
+  const wsWins={};
+  let wsLast='';
+  for(const g of games){
+    if(g.type!=='W'||!g.final)continue;
+    if(g.date>wsLast)wsLast=g.date;
+    if(g.winnerId!=null)wsWins[g.winnerId]=(wsWins[g.winnerId]||0)+1;
+  }
+  const wsDone=Object.values(wsWins).some(n=>n>=4);
+  // While the World Series is unfinished (or not yet scheduled) hold the
+  // accents on up to the outer bound. Gold stays on for the rest of the
+  // postseason even if Atlanta is eliminated early.
+  const end=wsDone&&wsLast?wsLast:`${season}-${PS_OUTER_BOUND}`;
+
+  // Badge text: the round Atlanta is currently playing. Once every Braves
+  // game is Final, fall back to a neutral label rather than implying they
+  // are still alive.
+  let label='POSTSEASON';
+  const liveGames=atl.filter(g=>!g.final);
+  if(liveGames.length){
+    const top=liveGames.reduce((a,b)=>(PS_RANK[b.type]||0)>(PS_RANK[a.type]||0)?b:a);
+    label=PS_ROUND[top.type]||'POSTSEASON';
+  }
+
+  const active=todayISO>=start&&todayISO<=end;
+  return{active,label,season,start,end,wsDone,
+    reason:active?`Postseason gold on · ${label}`:(todayISO>end?'World Series is over — back to the regular colours':'Postseason has not started yet')};
+}
+
+// Paint (or clear) the accents. Safe to call repeatedly.
+function applyPostseasonTheme(){
+  const ov=_psOverride();
+  const on=ov===null?!!POSTSEASON.active:ov;
+  const root=document.documentElement;
+  if(on)root.setAttribute('data-postseason','1');
+  else root.removeAttribute('data-postseason');
+  const tag=document.getElementById('hdr-ps');
+  if(tag)tag.textContent=on?`★ ${POSTSEASON.label||'POSTSEASON'}`:'';
+}
+
+// Boot-time paint from the cached decision so the theme does not flash in
+// after the first sync. Corrected by the live feed moments later.
+function initPostseasonTheme(){
+  const season=new Date().getFullYear();
+  const c=_psLoadCache(season);
+  if(c)POSTSEASON={active:c.active,label:c.label};
+  applyPostseasonTheme();
+}
+
+let _psFeedWarned=false;
+
+// Called after every live sync.
+function updatePostseasonTheme(schedJ){
+  const season=new Date().getFullYear();
+  const res=computePostseason(schedJ,season,_fmtDate(new Date()));
+  if(!res){
+    // No usable feed. Keep whatever state we already had and mention it once,
+    // rather than re-warning every 2 minutes and pinning the health dot.
+    if(!_psFeedWarned){
+      _psFeedWarned=true;
+      HEALTH.info('Postseason schedule empty or unavailable — keeping the current theme');
+    }
+    applyPostseasonTheme();
+    return;
+  }
+  _psFeedWarned=false;
+  const changed=res.active!==POSTSEASON.active||res.label!==POSTSEASON.label;
+  POSTSEASON={active:res.active,label:res.label};
+  _psSaveCache(res);
+  applyPostseasonTheme();
+  if(changed)HEALTH.info(res.reason);
+}
 function _pad(n){return String(n).padStart(2,'0')}
 function _fmtDate(d){return`${d.getFullYear()}-${_pad(d.getMonth()+1)}-${_pad(d.getDate())}`}
 function _shortDate(s){const[,m,d]=s.split('-');return['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m)-1]+' '+parseInt(d)}
@@ -322,13 +466,16 @@ async function fetchLiveData(){
   // Season-wide schedule for the Trends trajectory charts
   const seasonStart=`${season}-03-15`;
   const seasonEnd=`${season}-10-15`;
+  // Postseason window, used to drive the gold accent theme
+  const psStart=`${season}-09-25`;
+  const psEnd=`${season}-11-15`;
   const base=`https://statsapi.mlb.com/api/v1`;
   const espnBase=`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb`;
   // Truist Park, Atlanta
   const LAT=33.891, LON=-84.468;
 
   // First parallel wave: primary data sources
-  const [sr,gr,br,pr,rr,er,wr,ssr,lbr,lpr,nr,r40r]=await Promise.all([
+  const [sr,gr,br,pr,rr,er,wr,ssr,lbr,lpr,nr,r40r,psr]=await Promise.all([
     HEALTH.safeFetch(`${base}/standings?leagueId=103,104&season=${season}&standingsTypes=regularSeason&hydrate=team,records`),
     HEALTH.safeFetch(`${base}/schedule?sportId=1&teamId=${ATL_ID}&startDate=${start}&endDate=${end}&hydrate=linescore,team,decisions`),
     HEALTH.safeFetch(`${base}/stats?stats=season&group=hitting&season=${season}&teamId=${ATL_ID}&playerPool=All&limit=60&sportId=1&gameType=R`).catch(()=>null),
@@ -340,7 +487,8 @@ async function fetchLiveData(){
     HEALTH.safeFetch(`${base}/teams/stats?sportId=1&stats=season&season=${season}&group=hitting&gameType=R`).catch(()=>null),
     HEALTH.safeFetch(`${base}/teams/stats?sportId=1&stats=season&season=${season}&group=pitching&gameType=R`).catch(()=>null),
     HEALTH.safeFetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/news?teams=15&limit=12`).catch(()=>null),
-    HEALTH.safeFetch(`${base}/teams/${ATL_ID}/roster?rosterType=40Man&season=${season}`).catch(()=>null)
+    HEALTH.safeFetch(`${base}/teams/${ATL_ID}/roster?rosterType=40Man&season=${season}`).catch(()=>null),
+    HEALTH.safeFetch(`${base}/schedule?sportId=1&startDate=${psStart}&endDate=${psEnd}&gameType=F,D,L,W`).catch(()=>null)
   ]);
 
   // Parse schedule early so we can find last game ID for boxscore fetch
@@ -364,7 +512,7 @@ async function fetchLiveData(){
     :Promise.resolve(null);
 
   // Second parallel wave: remaining JSON + boxscore for last game
-  const [standingsJ,battingJ,pitchingJ,rosterJ,espnJ,weatherJ,seasonScheduleJ,leagueBatJ,leaguePitJ,boxscoreJ,newsJ,roster40ManJ,venueWeatherJ]=await Promise.all([
+  const [standingsJ,battingJ,pitchingJ,rosterJ,espnJ,weatherJ,seasonScheduleJ,leagueBatJ,leaguePitJ,boxscoreJ,newsJ,roster40ManJ,venueWeatherJ,postseasonJ]=await Promise.all([
     sr.json(),
     br?br.json():Promise.resolve(null),
     pr?pr.json():Promise.resolve(null),
@@ -377,7 +525,8 @@ async function fetchLiveData(){
     lastGamePk?HEALTH.safeFetch(`${base}/game/${lastGamePk}/boxscore`).then(r=>r.json()).catch(()=>null):Promise.resolve(null),
     nr?nr.json().catch(()=>null):Promise.resolve(null),
     r40r?r40r.json().catch(()=>null):Promise.resolve(null),
-    venueWeatherP
+    venueWeatherP,
+    psr?psr.json().catch(()=>null):Promise.resolve(null)
   ]);
 
   return{
@@ -395,7 +544,8 @@ async function fetchLiveData(){
     leagueBatting:leagueBatJ,
     leaguePitching:leaguePitJ,
     boxscore:boxscoreJ,
-    news:newsJ
+    news:newsJ,
+    postseason:postseasonJ
   };
 }
 
@@ -910,6 +1060,7 @@ async function refreshAll(){
   const liveResult=await fetchLiveData().then(v=>({status:'fulfilled',value:v}),e=>({status:'rejected',reason:e}));
   if(liveResult.status==='fulfilled'){
     DATA=mergeLiveData(SEED,liveResult.value);
+    updatePostseasonTheme(liveResult.value.postseason);
     HEALTH.ok(`Live sync — ${DATA.record.w}-${DATA.record.l} · ${DATA.batters.length} batters · ${DATA.pitchers.length} pitchers`,DATA.batters.length);
   }else{
     DATA=SEED;
@@ -1790,6 +1941,7 @@ window.addEventListener('hashchange',()=>applyTab(_tabFromHash()));
 HEALTH.info('Dashboard initialised — beginning first sync');
 DATA=SEED;
 currentTab=_tabFromHash();
+initPostseasonTheme();
 updateHdrContext(DATA);
 applyTab(currentTab);
 refreshAll();

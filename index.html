@@ -293,6 +293,37 @@
     .il-pos{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--yellow);background:#facc1515;padding:2px 5px;border-radius:3px;flex-shrink:0}
     .il-name{font-size:12px;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+    /* ══ POSTSEASON GOLD ACCENTS ══
+       Purely additive. The regular palette above is the default and is never
+       modified, so removing the data-postseason attribute on <html> restores
+       the normal colour scheme exactly. Accents are drawn with box-shadow
+       rings rather than border-color so they layer over the cards that carry
+       their own inline accent borders. */
+    .hdr-ps{display:none}
+    :root[data-postseason]{
+      --gold:#d4af37;
+      --gold-line:#d4af3759;
+      --gold-haze:#d4af3714;
+    }
+    :root[data-postseason] .card,
+    :root[data-postseason] .chart-card,
+    :root[data-postseason] .aic,
+    :root[data-postseason] .ph{
+      box-shadow:0 0 0 1px var(--gold-line),0 0 20px var(--gold-haze);
+    }
+    :root[data-postseason] .hdr{border-bottom-color:var(--gold);box-shadow:0 4px 20px rgba(212,175,55,.22)}
+    :root[data-postseason] .hero-banner{border-bottom-color:var(--gold)}
+    :root[data-postseason] .logo{box-shadow:0 0 16px rgba(212,175,55,.55)}
+    :root[data-postseason] .bnav{border-top-color:var(--gold-line)}
+    :root[data-postseason] .sb{box-shadow:0 0 0 1px #d4af3733}
+    :root[data-postseason] .hdr-game-strip{border-top-color:#d4af3738}
+    :root[data-postseason] .hdr-ps{
+      display:inline-block;font-size:8px;font-weight:900;letter-spacing:1.4px;
+      padding:2px 6px;border-radius:3px;background:rgba(212,175,55,.14);
+      border:1px solid rgba(212,175,55,.45);color:#e8c860;margin-top:3px;
+      text-transform:uppercase;white-space:nowrap;
+    }
+
     /* ── MOTION ── */
     @keyframes cardIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
     #content > .card,#content > .chart-card{animation:cardIn .34s cubic-bezier(.22,.7,.3,1) both}
@@ -317,7 +348,7 @@
     <div class="hdr-inner">
       <div class="hdr-row">
         <div class="logo">ATL</div>
-        <div><div class="hdr-title">BRAVES DASHBOARD</div><div class="hdr-sub">LIVE · 2026 SEASON</div></div>
+        <div><div class="hdr-title">BRAVES DASHBOARD</div><div class="hdr-sub">LIVE · 2026 SEASON</div><div class="hdr-ps" id="hdr-ps"></div></div>
         <div style="margin-left:auto;text-align:right"><div class="hdr-rec" id="hdr-rec">49-26</div><div class="hdr-rec-sub" id="hdr-rec-sub">1ST NL EAST · .654</div></div>
       </div>
       <div class="hdr-game-strip" id="hdr-game-strip"></div>

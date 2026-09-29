@@ -36,7 +36,7 @@ jobs:
         id: static_js
         run: |
           FAILS=0
-          for FN in "refreshAll" "fetchLiveData" "mergeLiveData" "updateHdrContext" "renderOverview" "renderCards" "applyTab" "bindDynamic"; do
+          for FN in "refreshAll" "fetchLiveData" "mergeLiveData" "updateHdrContext" "renderOverview" "renderCards" "applyTab" "bindDynamic" "computePostseason" "applyPostseasonTheme"; do
             if grep -q "$FN" app.js; then
               echo "  ✅ $FN()" >> $GITHUB_STEP_SUMMARY
             else
@@ -154,6 +154,47 @@ jobs:
           fi
           echo "csp_fails=$FAILS" >> $GITHUB_OUTPUT
 
+      - name: Static — postseason gold theme is additive and reversible
+        id: static_gold
+        run: |
+          FAILS=0
+          # The gold accents must be scoped to :root[data-postseason] only, so
+          # clearing the attribute restores the regular palette.
+          if grep -q 'data-postseason' index.html; then
+            echo "  ✅ Gold accent rules present" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "  ❌ Gold accent rules missing from index.html" >> $GITHUB_STEP_SUMMARY
+            FAILS=$((FAILS+1))
+          fi
+          # The regular palette must still be defined unconditionally on :root.
+          # NOTE: -- terminates option parsing; these patterns start with "--".
+          for TOKEN in "--green:#22c55e" "--yellow:#facc15" "--crimson:#ef4444" "--border:#1e3a26" "--red:#CE1141" "--navy:#002B5C"; do
+            if grep -qF -- "$TOKEN" index.html; then
+              echo "  ✅ regular palette token $TOKEN" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "  ❌ regular palette token MISSING: $TOKEN" >> $GITHUB_STEP_SUMMARY
+              FAILS=$((FAILS+1))
+            fi
+          done
+          # Gold must never redefine the base tokens; that would make the
+          # regular scheme unrecoverable. -Pzo so the whole multi-line block
+          # is inspected, not just the selector line.
+          if grep -Pzo '(?s):root\[data-postseason\]\s*\{.*?\}' index.html | tr -d '\0' \
+               | grep -qP '^\s*--(green|yellow|crimson|border|text|red|navy|bg|card|muted|dim|blue)\s*:'; then
+            echo "  ❌ Gold block overwrites a base palette token" >> $GITHUB_STEP_SUMMARY
+            FAILS=$((FAILS+1))
+          else
+            echo "  ✅ Gold block does not overwrite base palette tokens" >> $GITHUB_STEP_SUMMARY
+          fi
+          # The outer bound guarantees gold cannot stick on forever.
+          if grep -q "PS_OUTER_BOUND" app.js; then
+            echo "  ✅ Postseason outer date bound present" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "  ❌ PS_OUTER_BOUND missing from app.js" >> $GITHUB_STEP_SUMMARY
+            FAILS=$((FAILS+1))
+          fi
+          echo "gold_fails=$FAILS" >> $GITHUB_OUTPUT
+
       - name: Static — app.js parses as valid JavaScript
         id: static_parse
         run: |
@@ -261,12 +302,13 @@ jobs:
           F13="${{ steps.static_apikey.outputs.apikey_fails }}"
           F14="${{ steps.static_csp.outputs.csp_fails }}"
           F15="${{ steps.static_parse.outputs.parse_fail }}"
-          TOTAL_FAILS=$(( ${F1:-0}+${F2:-0}+${F3:-0}+${F4:-0}+${F5:-0}+${F6:-0}+${F7:-0}+${F8:-0}+${F9:-0}+${F10:-0}+${F11:-0}+${F12:-0}+${F13:-0}+${F14:-0}+${F15:-0} ))
+          F16="${{ steps.static_gold.outputs.gold_fails }}"
+          TOTAL_FAILS=$(( ${F1:-0}+${F2:-0}+${F3:-0}+${F4:-0}+${F5:-0}+${F6:-0}+${F7:-0}+${F8:-0}+${F9:-0}+${F10:-0}+${F11:-0}+${F12:-0}+${F13:-0}+${F14:-0}+${F15:-0}+${F16:-0} ))
           DATE=$(date -u '+%Y-%m-%d')
           if [ "$TOTAL_FAILS" -eq 0 ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "## ✅ HEALTHY — $DATE" >> $GITHUB_STEP_SUMMARY
-            echo "All 15 checks passed. bravesdashboards.com is live and healthy." >> $GITHUB_STEP_SUMMARY
+            echo "All 16 checks passed. bravesdashboards.com is live and healthy." >> $GITHUB_STEP_SUMMARY
             echo "overall=pass" >> $GITHUB_OUTPUT
           else
             echo "" >> $GITHUB_STEP_SUMMARY
