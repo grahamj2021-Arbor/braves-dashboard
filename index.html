@@ -301,28 +301,73 @@
        their own inline accent borders. */
     .hdr-ps{display:none}
     :root[data-postseason]{
-      --gold:#d4af37;
-      --gold-line:#d4af3759;
-      --gold-haze:#d4af3714;
+      --gold-dark:#6d4e12;
+      --gold-deep:#a87c22;
+      --gold:#c9a227;
+      --gold-mid:#d9b44a;
+      --gold-bright:#f7e7a8;
+      /* Polished-metal sweep. The dark→bright→dark banding is what reads as
+         real gold; a single flat tone just looks yellow. */
+      --gold-sheen:linear-gradient(135deg,
+        #6d4e12 0%,#a87c22 11%,#d9b44a 22%,#f7e7a8 34%,#fff3c4 41%,
+        #e6cf7e 50%,#c9a227 62%,#7f5c18 76%,#d9b44a 88%,#a87c22 100%);
+      --gold-rule:linear-gradient(90deg,
+        #6d4e12 0%,#a87c22 10%,#d9b44a 22%,#f7e7a8 34%,#fff3c4 42%,
+        #d9b44a 52%,#f7e7a8 64%,#c9a227 78%,#8a6420 90%,#6d4e12 100%);
     }
+    /* Flat fallback ring for engines without mask-composite. */
     :root[data-postseason] .card,
     :root[data-postseason] .chart-card,
     :root[data-postseason] .aic,
     :root[data-postseason] .ph{
-      box-shadow:0 0 0 1px var(--gold-line),0 0 20px var(--gold-haze);
+      position:relative;
+      box-shadow:0 0 0 1px rgba(201,162,39,.42),0 0 22px rgba(201,162,39,.10);
     }
-    :root[data-postseason] .hdr{border-bottom-color:var(--gold);box-shadow:0 4px 20px rgba(212,175,55,.22)}
-    :root[data-postseason] .hero-banner{border-bottom-color:var(--gold)}
-    :root[data-postseason] .logo{box-shadow:0 0 16px rgba(212,175,55,.55)}
-    :root[data-postseason] .bnav{border-top-color:var(--gold-line)}
-    :root[data-postseason] .sb{box-shadow:0 0 0 1px #d4af3733}
-    :root[data-postseason] .hdr-game-strip{border-top-color:#d4af3738}
+    /* Gradient hairline: a masked 1px inset ring, so each card is edged in
+       banded metal instead of a flat line. Layers over the cards that carry
+       their own inline accent border. */
+    @supports ((-webkit-mask-composite:xor) or (mask-composite:exclude)){
+      :root[data-postseason] .card,
+      :root[data-postseason] .chart-card,
+      :root[data-postseason] .aic,
+      :root[data-postseason] .ph{
+        box-shadow:0 0 22px rgba(201,162,39,.12);
+      }
+      :root[data-postseason] .card::after,
+      :root[data-postseason] .chart-card::after,
+      :root[data-postseason] .aic::after,
+      :root[data-postseason] .ph::after{
+        content:'';position:absolute;inset:0;border-radius:inherit;
+        pointer-events:none;z-index:3;padding:1px;
+        background:var(--gold-sheen);
+        -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+                mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+        -webkit-mask-composite:xor;
+                mask-composite:exclude;
+      }
+    }
+    :root[data-postseason] .hdr{
+      border-image:var(--gold-rule) 1;
+      box-shadow:0 4px 22px rgba(201,162,39,.20);
+    }
+    :root[data-postseason] .hero-banner{border-image:var(--gold-rule) 1}
+    :root[data-postseason] .bnav{border-image:var(--gold-rule) 1}
+    :root[data-postseason] .logo{box-shadow:0 0 18px rgba(217,180,74,.55)}
+    :root[data-postseason] .sb{box-shadow:0 0 0 1px rgba(201,162,39,.30)}
+    :root[data-postseason] .hdr-game-strip{border-top-color:rgba(217,180,74,.30)}
     :root[data-postseason] .hdr-ps{
       display:inline-block;font-size:8px;font-weight:900;letter-spacing:1.4px;
-      padding:2px 6px;border-radius:3px;background:rgba(212,175,55,.14);
-      border:1px solid rgba(212,175,55,.45);color:#e8c860;margin-top:3px;
+      padding:3px 8px;border-radius:3px;margin-top:4px;
       text-transform:uppercase;white-space:nowrap;
+      color:#332406;
+      background:var(--gold-sheen);
+      background-size:220% 100%;
+      border:1px solid rgba(247,231,168,.55);
+      box-shadow:0 0 12px rgba(201,162,39,.38),inset 0 1px 0 rgba(255,248,214,.45);
+      text-shadow:0 1px 0 rgba(255,246,206,.35);
+      animation:goldShimmer 5s linear infinite;
     }
+    @keyframes goldShimmer{from{background-position:0% 50%}to{background-position:220% 50%}}
 
     /* ── MOTION ── */
     @keyframes cardIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
@@ -335,6 +380,7 @@
     #content > *:nth-child(n+6){animation-delay:215ms}
     @media (prefers-reduced-motion:reduce){
       #content > .card,#content > .chart-card{animation:none}
+      :root[data-postseason] .hdr-ps{animation:none}
       .pcard-inner{transition:none!important}
     }
   </style>
